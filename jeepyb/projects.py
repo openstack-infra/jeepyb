@@ -181,6 +181,12 @@ def _hardcoded_git2lp(project_full_name):
         'stackforge/puppet-quantum': 'puppet-neutron',
         'stackforge/tripleo-heat-templates': 'tripleo',
         'stackforge/tripleo-image-elements': 'tripleo',
+        'stackforge/savanna': 'savanna',
+        'stackforge/savanna-dashboard': 'savanna',
+        'stackforge/savanna-extra': 'savanna',
+        'stackforge/savanna-image-elements': 'savanna',
+        'stackforge/python-savannaclient': 'savanna',
+        'stackforge/puppet-savanna': 'savanna'
     }
     return project_map.get(project_full_name,
                            u.short_project_name(project_full_name))
