@@ -47,6 +47,7 @@
 
 from __future__ import print_function
 
+import argparse
 import ConfigParser
 import logging
 import os
@@ -61,7 +62,6 @@ import github
 
 import jeepyb.gerritdb
 
-logging.basicConfig(level=logging.ERROR)
 log = logging.getLogger("manage_projects")
 
 
@@ -287,6 +287,19 @@ def create_github_project(defaults, options, project, description, homepage):
 
 
 def main():
+    parser = argparse.ArgumentParser(description='Manage projects')
+    parser.add_argument('-v', dest='verbose', action='store_true',
+                        help='verbose output')
+    parser.add_argument('--nocleanup', action='store_true',
+                        help='do not remove temp directories')
+    parser.add_argument('projects', metavar='project', nargs='*',
+                        help='name of project(s) to process')
+    args = parser.parse_args()
+
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.ERROR)
 
     PROJECTS_YAML = os.environ.get('PROJECTS_YAML',
                                    '/home/gerrit2/projects.yaml')
@@ -314,6 +327,8 @@ def main():
 
         for section in configs[1]:
             project = section['project']
+            if args.projects and project not in args.projects:
+                continue
             options = section.get('options', dict())
             description = section.get('description', None)
             homepage = section.get('homepage', defaults.get('homepage', None))
@@ -369,7 +384,8 @@ project=%s
                     git_command(repo_path,
                                 "push --tags %s" % remote_url, env=ssh_env)
                 finally:
-                    run_command("rm -fr %s" % tmpdir)
+                    if not args.nocleanup:
+                        run_command("rm -fr %s" % tmpdir)
 
             try:
                 acl_config = section.get('acl-config',
@@ -404,7 +420,8 @@ project=%s
                                         GERRIT_GITID,
                                         ssh_env)
                 finally:
-                    run_command("rm -fr %s" % tmpdir)
+                    if not args.nocleanup:
+                        run_command("rm -fr %s" % tmpdir)
     finally:
         os.unlink(ssh_env['GIT_SSH'])
 
