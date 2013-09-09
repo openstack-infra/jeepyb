@@ -139,6 +139,13 @@ def git2lp(full_project_name):
     """Convert Git repo name to Launchpad project."""
     project_map = {
         'openstack/api-site': 'openstack-api-site',
+        'openstack/identity-api': 'openstack-api-site',
+        'openstack/object-api': 'openstack-api-site',
+        'openstack/volume-api': 'openstack-api-site',
+        'openstack/netconn-api': 'openstack-api-site',
+        'openstack/compute-api': 'openstack-api-site',
+        'openstack/image-api': 'openstack-api-site',
+        'openstack/database-api': 'openstack-api-site',
         'openstack/quantum': 'neutron',
         'openstack/python-quantumclient': 'python-neutronclient',
         'openstack/oslo-incubator': 'oslo',
