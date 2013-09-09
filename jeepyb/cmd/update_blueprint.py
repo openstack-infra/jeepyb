@@ -28,6 +28,9 @@ from launchpadlib import launchpad
 from launchpadlib import uris
 import MySQLdb
 
+from jeepyb import projects as p
+
+
 BASE_DIR = '/home/gerrit2/review_site'
 GERRIT_CACHE_DIR = os.path.expanduser(
     os.environ.get('GERRIT_CACHE_DIR',
@@ -63,22 +66,11 @@ DB_PASS = SECURE_CONFIG.get("database", "password")
 DB_DB = GERRIT_CONFIG.get("database", "database")
 
 
-def short_project(full_project_name):
-    """Return the project part of the git repository name."""
-    return full_project_name.split('/')[-1]
-
-
-def git2lp(full_project_name):
-    """Convert Git repo name to Launchpad project."""
-    project_map = {
-        'stackforge/puppet-openstack_dev_env': 'puppet-openstack',
-        'stackforge/puppet-quantum': 'puppet-neutron',
-    }
-    return project_map.get(full_project_name, short_project(full_project_name))
-
-
 def update_spec(launchpad, project, name, subject, link, topic=None):
-    project = git2lp(project)
+    if p.is_no_launchpad_blueprints(project):
+        return
+
+    project = p.git2lp(project)
     spec = launchpad.projects[project].getSpecification(name=name)
     if not spec:
         return

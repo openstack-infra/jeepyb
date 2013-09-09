@@ -26,6 +26,9 @@ from launchpadlib import launchpad
 from launchpadlib import uris
 
 import jeepyb.gerritdb
+from jeepyb import projects as p
+from jeepyb import utils as u
+
 
 BASE_DIR = '/home/gerrit2/review_site'
 GERRIT_CACHE_DIR = os.path.expanduser(
@@ -46,7 +49,8 @@ def fix_or_related_fix(related):
 def add_change_proposed_message(bugtask, change_url, project, branch,
                                 related=False):
     fix = fix_or_related_fix(related)
-    subject = '%s proposed to %s (%s)' % (fix, short_project(project), branch)
+    subject = ('%s proposed to %s (%s)'
+               % (fix, u.short_project_name(project), branch))
     body = '%s proposed to branch: %s\nReview: %s' % (fix, branch, change_url)
     bugtask.bug.newMessage(subject=subject, content=body)
 
@@ -54,7 +58,7 @@ def add_change_proposed_message(bugtask, change_url, project, branch,
 def add_change_merged_message(bugtask, change_url, project, commit,
                               submitter, branch, git_log, related=False):
     subject = '%s merged to %s (%s)' % (fix_or_related_fix(related),
-                                        short_project(project), branch)
+                                        u.short_project_name(project), branch)
     git_url = 'http://github.com/%s/commit/%s' % (project, commit)
     body = '''Reviewed:  %s
 Committed: %s
@@ -140,106 +144,6 @@ def tag_in_branchname(bugtask, branch):
         lp_bug.lp_save()
 
 
-def short_project(full_project_name):
-    """Return the project part of the git repository name."""
-    return full_project_name.split('/')[-1]
-
-
-def git2lp(full_project_name):
-    """Convert Git repo name to Launchpad project."""
-    project_map = {
-        'openstack/api-site': 'openstack-api-site',
-        'openstack/identity-api': 'openstack-api-site',
-        'openstack/object-api': 'openstack-api-site',
-        'openstack/volume-api': 'openstack-api-site',
-        'openstack/netconn-api': 'openstack-api-site',
-        'openstack/compute-api': 'openstack-api-site',
-        'openstack/image-api': 'openstack-api-site',
-        'openstack/database-api': 'openstack-api-site',
-        'openstack/quantum': 'neutron',
-        'openstack/python-quantumclient': 'python-neutronclient',
-        'openstack/oslo-incubator': 'oslo',
-        'openstack/tripleo-incubator': 'tripleo',
-        'openstack-infra/askbot-theme': 'openstack-ci',
-        'openstack-infra/config': 'openstack-ci',
-        'openstack-infra/devstack-gate': 'openstack-ci',
-        'openstack-infra/gear': 'openstack-ci',
-        'openstack-infra/gerrit': 'openstack-ci',
-        'openstack-infra/gerritbot': 'openstack-ci',
-        'openstack-infra/gerritlib': 'openstack-ci',
-        'openstack-infra/gitdm': 'openstack-ci',
-        'openstack-infra/jeepyb': 'openstack-ci',
-        'openstack-infra/jenkins-job-builder': 'openstack-ci',
-        'openstack-infra/lodgeit': 'openstack-ci',
-        'openstack-infra/meetbot': 'openstack-ci',
-        'openstack-infra/nose-html-output': 'openstack-ci',
-        'openstack-infra/publications': 'openstack-ci',
-        'openstack-infra/puppet-apparmor': 'openstack-ci',
-        'openstack-infra/puppet-dashboard': 'openstack-ci',
-        'openstack-infra/puppet-vcsrepo': 'openstack-ci',
-        'openstack-infra/reviewday': 'openstack-ci',
-        'openstack-infra/statusbot': 'openstack-ci',
-        'openstack-infra/zmq-event-publisher': 'openstack-ci',
-        'stackforge/cookbook-openstack-block-storage': 'openstack-chef',
-        'stackforge/cookbook-openstack-common': 'openstack-chef',
-        'stackforge/cookbook-openstack-compute': 'openstack-chef',
-        'stackforge/cookbook-openstack-dashboard': 'openstack-chef',
-        'stackforge/cookbook-openstack-identity': 'openstack-chef',
-        'stackforge/cookbook-openstack-image': 'openstack-chef',
-        'stackforge/cookbook-openstack-metering': 'openstack-chef',
-        'stackforge/cookbook-openstack-network': 'openstack-chef',
-        'stackforge/cookbook-openstack-object-storage': 'openstack-chef',
-        'stackforge/cookbook-openstack-ops-database': 'openstack-chef',
-        'stackforge/cookbook-openstack-ops-messaging': 'openstack-chef',
-        'stackforge/cookbook-openstack-orchestration': 'openstack-chef',
-        'stackforge/openstack-chef-repo': 'openstack-chef',
-        'stackforge/puppet-openstack_dev_env': 'puppet-openstack',
-        'stackforge/puppet-quantum': 'puppet-neutron',
-        'stackforge/tripleo-heat-templates': 'tripleo',
-        'stackforge/tripleo-image-elements': 'tripleo',
-    }
-    return project_map.get(full_project_name, short_project(full_project_name))
-
-
-def is_direct_release(full_project_name):
-    """Test against a list of projects who directly release changes."""
-    return full_project_name in [
-        'openstack/openstack-manuals',
-        'openstack/api-site',
-        'openstack/tripleo-incubator',
-        'openstack/tempest',
-        'openstack-dev/devstack',
-        'openstack-infra/askbot-theme',
-        'openstack-infra/config',
-        'openstack-infra/devstack-gate',
-        'openstack-infra/gerrit',
-        'openstack-infra/gerritbot',
-        'openstack-infra/gerritlib',
-        'openstack-infra/gitdm',
-        'openstack-infra/lodgeit',
-        'openstack-infra/meetbot',
-        'openstack-infra/nose-html-output',
-        'openstack-infra/publications',
-        'openstack-infra/reviewday',
-        'openstack-infra/statusbot',
-        'stackforge/cookbook-openstack-block-storage',
-        'stackforge/cookbook-openstack-common',
-        'stackforge/cookbook-openstack-compute',
-        'stackforge/cookbook-openstack-dashboard',
-        'stackforge/cookbook-openstack-identity',
-        'stackforge/cookbook-openstack-image',
-        'stackforge/cookbook-openstack-metering',
-        'stackforge/cookbook-openstack-network',
-        'stackforge/cookbook-openstack-object-storage',
-        'stackforge/cookbook-openstack-ops-database',
-        'stackforge/cookbook-openstack-ops-messaging',
-        'stackforge/cookbook-openstack-orchestration',
-        'stackforge/openstack-chef-repo',
-        'stackforge/tripleo-heat-templates',
-        'stackforge/tripleo-image-elements',
-    ]
-
-
 class Task:
     def __init__(self, lp_task, prefix):
         '''Prefixes associated with bug references will allow for certain
@@ -291,7 +195,7 @@ def process_bugtask(launchpad, task, git_log, args):
 
     if args.hook == "change-merged":
         if args.branch == 'master':
-            if (is_direct_release(args.project) and
+            if (p.is_direct_release(args.project) and
                     task.needs_change('set_fix_released')):
                 set_fix_released(bugtask)
             else:
@@ -362,6 +266,13 @@ def find_bugs(launchpad, git_log, args):
     :returns: an iterable containing Task objects.
     '''
 
+    project = args.project
+
+    if p.is_no_launchpad_bugs(project):
+        return []
+
+    project = p.git2lp(project)
+
     part1 = r'^[\t ]*(?P<prefix>[-\w]+)?[\s:]*'
     part2 = r'(?:\b(?:bug|lp)\b[\s#:]*)+'
     part3 = r'(?P<bug_number>\d+)\s*?$'
@@ -377,7 +288,7 @@ def find_bugs(launchpad, git_log, args):
             try:
                 lp_bug = launchpad.bugs[bug_num]
                 for lp_task in lp_bug.bug_tasks:
-                    if lp_task.bug_target_name == git2lp(args.project):
+                    if lp_task.bug_target_name == project:
                         bugtasks[bug_num] = Task(lp_task, prefix)
                         break
             except KeyError:
@@ -423,6 +334,7 @@ def main():
     # Process tasks found in git log.
     for task in find_bugs(lpconn, git_log, args):
         process_bugtask(lpconn, task, git_log, args)
+
 
 if __name__ == "__main__":
     main()
