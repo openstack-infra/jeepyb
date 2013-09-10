@@ -79,11 +79,13 @@ def create_bug(git_log, args, lp_project):
 def process_impact(git_log, args):
     """Process DocImpact flag.
 
-    If the 'DocImpact' flag is present, create a new documentation bug in
+    If the 'DocImpact' flag is present for a change that is merged,
+    create a new documentation bug in
     the openstack-manuals launchpad project based on the git_log.
-    For non-documentation impacts notify the mailing list of impact.
+    For non-documentation impacts at all states of merge
+    notify the mailing list of impact.
     """
-    if args.impact.lower() == 'docimpact':
+    if args.impact.lower() == 'docimpact' and args.hook == "change-merged":
         create_bug(git_log, args, 'openstack-manuals')
         return
 
