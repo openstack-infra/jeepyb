@@ -36,15 +36,25 @@ GERRIT_CREDENTIALS = os.path.expanduser(
                    '~/.launchpadlib/creds'))
 
 
-def add_change_proposed_message(bugtask, change_url, project, branch):
-    subject = 'Fix proposed to %s (%s)' % (short_project(project), branch)
-    body = 'Fix proposed to branch: %s\nReview: %s' % (branch, change_url)
+def fix_or_related_fix(related):
+    if related:
+        return "Related fix"
+    else:
+        return "Fix"
+
+
+def add_change_proposed_message(bugtask, change_url, project, branch,
+                                related=False):
+    fix = fix_or_related_fix(related)
+    subject = '%s proposed to %s (%s)' % (fix, short_project(project), branch)
+    body = '%s proposed to branch: %s\nReview: %s' % (fix, branch, change_url)
     bugtask.bug.newMessage(subject=subject, content=body)
 
 
 def add_change_merged_message(bugtask, change_url, project, commit,
-                              submitter, branch, git_log):
-    subject = 'Fix merged to %s (%s)' % (short_project(project), branch)
+                              submitter, branch, git_log, related=False):
+    subject = '%s merged to %s (%s)' % (fix_or_related_fix(related),
+                                        short_project(project), branch)
     git_url = 'http://github.com/%s/commit/%s' % (project, commit)
     body = '''Reviewed:  %s
 Committed: %s
@@ -237,6 +247,7 @@ class Task:
 
         ::
         add_comment       -> Adds a comment to the bug's lp page.
+        sidenote          -> Adds a 'related' comment to the bug's lp page.
         set_in_progress   -> Sets the bug's lp status to 'In Progress'.
         set_fix_released  -> Sets the bug's lp status to 'Fix Released'.
         set_fix_committed -> Sets the bug's lp status to 'Fix Committed'.
@@ -259,7 +270,7 @@ class Task:
         elif prefix in ('partial',):
             self.changes_needed.extend(('add_comment', 'set_in_progress'))
         elif prefix in ('related', 'impacts', 'affects'):
-            self.changes_needed.extend(('add_comment',))
+            self.changes_needed.extend(('sidenote',))
         else:
             # prefix is not recognized.
             self.changes_needed.extend(('add_comment',))
@@ -301,9 +312,11 @@ def process_bugtask(launchpad, task, git_log, args):
                 # Use tag_in_branchname if there isn't any.
                 tag_in_branchname(bugtask, args.branch)
 
-        add_change_merged_message(bugtask, args.change_url, args.project,
-                                  args.commit, args.submitter, args.branch,
-                                  git_log)
+        if task.needs_change('add_comment') or task.needs_change('sidenote'):
+            add_change_merged_message(bugtask, args.change_url, args.project,
+                                      args.commit, args.submitter, args.branch,
+                                      git_log,
+                                      related=task.needs_change('sidenote'))
 
     if args.hook == "patchset-created":
         if args.branch == 'master':
@@ -322,9 +335,11 @@ def process_bugtask(launchpad, task, git_log, args):
                                     args.uploader, args.change_url)
                     break
 
-        if args.patchset == '1':
+        if args.patchset == '1' and (task.needs_change('add_comment') or
+                                     task.needs_change('sidenote')):
             add_change_proposed_message(bugtask, args.change_url,
-                                        args.project, args.branch)
+                                        args.project, args.branch,
+                                        related=task.needs_change('sidenote'))
 
 
 def find_bugs(launchpad, git_log, args):
