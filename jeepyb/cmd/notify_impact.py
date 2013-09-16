@@ -85,8 +85,9 @@ def process_impact(git_log, args):
     For non-documentation impacts at all states of merge
     notify the mailing list of impact.
     """
-    if args.impact.lower() == 'docimpact' and args.hook == "change-merged":
-        create_bug(git_log, args, 'openstack-manuals')
+    if args.impact.lower() == 'docimpact':
+        if args.hook == "change-merged":
+            create_bug(git_log, args, 'openstack-manuals')
         return
 
     email_content = EMAIL_TEMPLATE % (args.impact,
