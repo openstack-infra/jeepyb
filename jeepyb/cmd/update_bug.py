@@ -207,6 +207,7 @@ def is_direct_release(full_project_name):
         'openstack/openstack-manuals',
         'openstack/api-site',
         'openstack/tripleo-incubator',
+        'openstack/tempest',
         'openstack-dev/devstack',
         'openstack-infra/askbot-theme',
         'openstack-infra/config',
