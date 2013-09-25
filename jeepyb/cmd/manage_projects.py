@@ -53,6 +53,7 @@ import re
 import shlex
 import subprocess
 import tempfile
+import time
 import yaml
 
 import gerritlib.gerrit
@@ -168,7 +169,7 @@ def push_acl_config(project, remote_url, repo_path, gitid, env={}):
     return True
 
 
-def _get_group_uuid(gerrit, group):
+def _get_group_uuid(group):
     cursor = jeepyb.gerritdb.connect().cursor()
     query = "SELECT group_uuid FROM account_groups WHERE name = %s"
     cursor.execute(query, group)
@@ -178,12 +179,22 @@ def _get_group_uuid(gerrit, group):
     return None
 
 
+def _wait_for_group(gerrit, group):
+    """Wait for up to 10 seconds for the group to be created."""
+    for x in range(10):
+        groups = gerrit.listGroups()
+        if group in groups:
+            break
+        time.sleep(1)
+
+
 def get_group_uuid(gerrit, group):
-    uuid = _get_group_uuid(gerrit, group)
+    uuid = _get_group_uuid(group)
     if uuid:
         return uuid
     gerrit.createGroup(group)
-    uuid = _get_group_uuid(gerrit, group)
+    _wait_for_group(gerrit, group)
+    uuid = _get_group_uuid(group)
     if uuid:
         return uuid
     return None
