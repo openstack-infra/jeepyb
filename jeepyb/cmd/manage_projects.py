@@ -45,8 +45,6 @@
 #   acl-parameters:
 #     project: OTHER_PROJECT_NAME
 
-from __future__ import print_function
-
 import argparse
 import ConfigParser
 import logging
@@ -128,14 +126,14 @@ def fetch_config(project, remote_url, repo_path, env={}):
     status = git_command(repo_path, "fetch %s +refs/meta/config:"
                          "refs/remotes/gerrit-meta/config" % remote_url, env)
     if status != 0:
-        print("Failed to fetch refs/meta/config for project: %s" % project)
+        log.error("Failed to fetch refs/meta/config for project: %s" % project)
         return False
     # Because the following fails if executed more than once you should only
     # run fetch_config once in each repo.
     status = git_command(repo_path, "checkout -b config "
                          "remotes/gerrit-meta/config")
     if status != 0:
-        print("Failed to checkout config for project: %s" % project)
+        log.error("Failed to checkout config for project: %s" % project)
         return False
 
     return True
@@ -159,14 +157,13 @@ def push_acl_config(project, remote_url, repo_path, gitid, env={}):
     cmd = "commit -a -m'Update project config.' --author='%s'" % gitid
     status = git_command(repo_path, cmd)
     if status != 0:
-        print("Failed to commit config for project: %s" % project)
+        log.error("Failed to commit config for project: %s" % project)
         return False
     status, out = git_command_output(repo_path,
                                      "push %s HEAD:refs/meta/config" %
                                      remote_url, env)
     if status != 0:
-        print("Failed to push config for project: %s" % project)
-        print(out)
+        log.error("Failed to push config for project: %s" % project)
         return False
     return True
 
@@ -206,6 +203,7 @@ def create_groups_file(project, gerrit, repo_path):
             if uuid:
                 uuids[group] = uuid
             else:
+                log.error("Unable to get UUID for group %s." % group)
                 return False
     if uuids:
         with open(group_file, 'w') as fp:
@@ -213,7 +211,7 @@ def create_groups_file(project, gerrit, repo_path):
                 fp.write("%s\t%s\n" % (uuid, group))
     status = git_command(repo_path, "add groups")
     if status != 0:
-        print("Failed to add groups file for project: %s" % project)
+        log.error("Failed to add groups file for project: %s" % project)
         return False
     return True
 
@@ -383,6 +381,9 @@ project=%s
                                 env=ssh_env)
                     git_command(repo_path,
                                 "push --tags %s" % remote_url, env=ssh_env)
+                except Exception:
+                    log.exception(
+                        "Exception creating %s in Gerrit." % project)
                 finally:
                     if not args.nocleanup:
                         run_command("rm -fr %s" % tmpdir)
@@ -419,6 +420,9 @@ project=%s
                                         repo_path,
                                         GERRIT_GITID,
                                         ssh_env)
+                except Exception:
+                    log.exception(
+                        "Exception processing ACLS for %s." % project)
                 finally:
                     if not args.nocleanup:
                         run_command("rm -fr %s" % tmpdir)
