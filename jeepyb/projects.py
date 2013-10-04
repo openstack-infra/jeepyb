@@ -144,6 +144,7 @@ def _hardcoded_git2lp(project_full_name):
         'openstack/python-quantumclient': 'python-neutronclient',
         'openstack/oslo-incubator': 'oslo',
         'openstack/tripleo-incubator': 'tripleo',
+        'openstack/django_openstack_auth': 'django-openstack-auth',
         'openstack-infra/askbot-theme': 'openstack-ci',
         'openstack-infra/config': 'openstack-ci',
         'openstack-infra/devstack-gate': 'openstack-ci',
