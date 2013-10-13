@@ -132,7 +132,7 @@ def fetch_config(project, remote_url, repo_path, env={}):
         return False
     # Because the following fails if executed more than once you should only
     # run fetch_config once in each repo.
-    status = git_command(repo_path, "checkout -b config "
+    status = git_command(repo_path, "checkout -B config "
                          "remotes/gerrit-meta/config")
     if status != 0:
         log.error("Failed to checkout config for project: %s" % project)
