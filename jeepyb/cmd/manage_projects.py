@@ -551,6 +551,7 @@ project=%s
                     log.exception(
                         "Exception processing ACLS for %s." % project)
                 finally:
+                    git_command(repo_path, 'reset --hard')
                     git_command(repo_path, 'checkout master')
                     git_command(repo_path, 'branch -D config')
 
