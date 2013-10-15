@@ -513,7 +513,7 @@ project=%s
                     # Branches on gerrit. Also, push all of the tags
                     git_command(
                         repo_path,
-                        "push origin +refs/heads/*:refs/heads/*",
+                        "push origin refs/heads/*:refs/heads/*",
                         env=ssh_env)
                     git_command(repo_path, 'push --tags', env=ssh_env)
                 except Exception:
