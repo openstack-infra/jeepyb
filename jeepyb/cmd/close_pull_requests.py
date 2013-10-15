@@ -95,8 +95,9 @@ def main():
         for req in pull_requests:
             vars = dict(project=project)
             issue_data = {"url": repo.url + "/issues/" + str(req.number)}
-            issue = github.Issue.Issue(req._requester,
-                                       issue_data,
+            issue = github.Issue.Issue(requester=req._requester,
+                                       headers={},
+                                       attributes=issue_data,
                                        completed=True)
             issue.create_comment(MESSAGE % vars)
             req.edit(state="closed")
