@@ -356,6 +356,18 @@ def main():
             project_git = "%s.git" % project
             remote_url = "ssh://localhost:%s/%s" % (GERRIT_PORT, project)
 
+            # Create the project in Gerrit first, since it will fail
+            # spectacularly if its project directory or local replica
+            # already exist on disk
+            project_created = False
+            if project not in project_list:
+                try:
+                    gerrit.createProject(project)
+                    project_created = True
+                except Exception:
+                    log.exception(
+                        "Exception creating %s in Gerrit." % project)
+
             # Create the repo for the local git mirror
             git_mirror_path = os.path.join(LOCAL_GIT_DIR, project_git)
             if not os.path.exists(git_mirror_path):
@@ -371,7 +383,7 @@ def main():
                             remote_url=remote_url)
 
             # If we don't have a local copy already, get one
-            if not os.path.exists(repo_path):
+            if not os.path.exists(repo_path) or project_created:
                 if not os.path.exists(os.path.dirname(repo_path)):
                     os.makedirs(os.path.dirname(repo_path))
                 # Three choices
@@ -469,10 +481,8 @@ project=%s
                 create_github_project(defaults, options, project,
                                       description, homepage)
 
-            if project not in project_list:
+            if project_created:
                 try:
-                    gerrit.createProject(project)
-
                     git_command(repo_path,
                                 push_string % remote_url,
                                 env=ssh_env)
@@ -480,7 +490,7 @@ project=%s
                                 "push --tags %s" % remote_url, env=ssh_env)
                 except Exception:
                     log.exception(
-                        "Exception creating %s in Gerrit." % project)
+                        "Error pushing %s to Gerrit." % project)
 
             # If we're configured to track upstream, make sure we have
             # upstream's refs, and then push them to the appropriate
