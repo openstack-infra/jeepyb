@@ -428,7 +428,7 @@ def main():
                     run_command("git init %s" % repo_path)
                     git_command(
                         repo_path,
-                        "remote add origin %(remote_url)" % git_opts)
+                        "remote add origin %(remote_url)s" % git_opts)
                     with open(os.path.join(repo_path,
                                            ".gitreview"),
                               'w') as gitreview:
