@@ -525,7 +525,7 @@ project=%s
                         repo_path,
                         "push origin refs/heads/*:refs/heads/*",
                         env=ssh_env)
-                    git_command(repo_path, 'push --tags', env=ssh_env)
+                    git_command(repo_path, 'push origin --tags', env=ssh_env)
                 except Exception:
                     log.exception(
                         "Error pushing %s to Gerrit." % project)
