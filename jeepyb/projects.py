@@ -187,7 +187,11 @@ def _hardcoded_git2lp(project_full_name):
         'stackforge/savanna-extra': 'savanna',
         'stackforge/savanna-image-elements': 'savanna',
         'stackforge/python-savannaclient': 'savanna',
-        'stackforge/puppet-savanna': 'savanna'
+        'stackforge/puppet-savanna': 'savanna',
+        'stackforge/fuel-web': 'fuel',
+        'stackforge/fuel-astute': 'fuel',
+        'stackforge/fuel-ostf': 'fuel',
+        'stackforge/fuel-main': 'fuel'
     }
     return project_map.get(project_full_name,
                            u.short_project_name(project_full_name))
