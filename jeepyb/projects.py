@@ -146,7 +146,6 @@ def _hardcoded_git2lp(project_full_name):
         'openstack/tripleo-incubator': 'tripleo',
         'openstack/django_openstack_auth': 'django-openstack-auth',
         'openstack/savanna': 'savanna',
-        'openstack/python-savannaclient': 'savanna',
         'openstack/savanna-dashboard': 'savanna',
         'openstack/savanna-image-elements': 'savanna',
         'openstack/savanna-extra': 'savanna',
