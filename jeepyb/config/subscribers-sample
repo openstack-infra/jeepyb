@@ -1,0 +1,6 @@
+author_map:
+    mikal@stillhq.com: rcbau
+    grumpy@dwarves.com: rcbau
+
+subscriber_map:
+    rcbau: ['mikalstill']

@@ -17,6 +17,19 @@
 # patchsets for strings like "bug FOO" and updates corresponding Launchpad
 # bugs status.
 
+# You want to test this? I use a command line a bit like this:
+#     python notify_impact.py --change 55607 \
+#     --change-url https://review.openstack.org/55607 --project nova/ \
+#     --branch master --commit c262de4417d48be599c3a7496ef94de5c84b188c \
+#     --impact DocImpact --dest-address none@localhost --dryrun \
+#     --ignore-duplicates \
+#     change-merged
+#
+# But you'll need a git repository at /home/gerrit2/review_site/git/nova.git
+# for that to work
+
+from __future__ import print_function
+
 import argparse
 import os
 import re
@@ -26,6 +39,7 @@ import subprocess
 from email.mime import text
 from launchpadlib import launchpad
 from launchpadlib import uris
+import yaml
 
 BASE_DIR = '/home/gerrit2/review_site'
 EMAIL_TEMPLATE = """
@@ -45,7 +59,39 @@ GERRIT_CREDENTIALS = os.path.expanduser(
                    '~/.launchpadlib/creds'))
 
 
-def create_bug(git_log, args, lp_project):
+class BugActionsReal(object):
+    """Things we do to bugs."""
+
+    def __init__(self, lpconn):
+        self.lpconn = lpconn
+
+    def create(self, project, bug_title, bug_descr, args):
+        buginfo = self.lpconn.bugs.createBug(
+            target=project, title=bug_title,
+            description=bug_descr, tags=args.project.split('/')[1])
+        buglink = buginfo.web_link
+        return buginfo, buglink
+
+    def subscribe(self, buginfo, subscriber):
+        user = self.lpconn.people[subscriber]
+        if user:
+            buginfo.subscribe(person=user)
+
+
+class BugActionsDryRun(object):
+    def __init__(self, lpconn):
+        self.lpconn = lpconn
+
+    def create(self, project, bug_title, bug_descr, args):
+        print('I would have created a bug, but I am in dry run mode')
+        return None, None
+
+    def subscribe(self, buginfo, subscriber):
+        print('I would have added %s as a subscriber to the bug, '
+              'but I am in dry run mode' % subscriber)
+
+
+def create_bug(git_log, args, lp_project, subscribers):
     """Create a bug for a change.
 
     Create a launchpad bug in lp_project, titled with the first line of
@@ -60,23 +106,44 @@ def create_bug(git_log, args, lp_project):
         credentials_file=GERRIT_CREDENTIALS,
         version='devel')
 
+    if args.dryrun:
+        actions = BugActionsDryRun(lpconn)
+    else:
+        actions = BugActionsReal(lpconn)
+
     lines_in_log = git_log.split("\n")
     bug_title = lines_in_log[4]
     bug_descr = args.change_url + '\n' + git_log
     project = lpconn.projects[lp_project]
+
     # check for existing bugs by searching for the title, to avoid
     # creating multiple bugs per review
+    buglink = None
+    author_class = None
     potential_dupes = project.searchTasks(search_text=bug_title)
-    if len(potential_dupes) == 0:
-        buginfo = lpconn.bugs.createBug(
-            target=project, title=bug_title,
-            description=bug_descr, tags=args.project.split('/')[1])
-        buglink = buginfo.web_link
+
+    if len(potential_dupes) == 0 or args.ignore_duplicates:
+        buginfo, buglink = actions.create(project, bug_title, bug_descr, args)
+
+        # If the author of the merging patch matches our configured
+        # subscriber lists, then subscribe the configured victims.
+        for email_address in subscribers.get('author_map', {}):
+            email_re = re.compile('^Author:.*%s.*' % email_address)
+            for line in bug_descr.split('\n'):
+                m = email_re.match(line)
+                if m:
+                    author_class = subscribers['author_map'][email_address]
+
+        if author_class:
+            subscribers = \
+                subscribers.get('subscriber_map', {}).get(author_class, [])
+            for subscriber in subscribers:
+                actions.subscribe(buginfo, subscriber)
 
     return buglink
 
 
-def process_impact(git_log, args):
+def process_impact(git_log, args, subscribers):
     """Process DocImpact flag.
 
     If the 'DocImpact' flag is present for a change that is merged,
@@ -87,7 +154,7 @@ def process_impact(git_log, args):
     """
     if args.impact.lower() == 'docimpact':
         if args.hook == "change-merged":
-            create_bug(git_log, args, 'openstack-manuals')
+            create_bug(git_log, args, 'openstack-manuals', subscribers)
         return
 
     email_content = EMAIL_TEMPLATE % (args.impact,
@@ -121,29 +188,69 @@ def extract_git_log(args):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('hook')
-    #common
+
+    # common
     parser.add_argument('--change', default=None)
     parser.add_argument('--change-url', default=None)
     parser.add_argument('--project', default=None)
     parser.add_argument('--branch', default=None)
     parser.add_argument('--commit', default=None)
-    #change-merged
+
+    # change-merged
     parser.add_argument('--submitter', default=None)
-    #patchset-created
+
+    # patchset-created
     parser.add_argument('--uploader', default=None)
     parser.add_argument('--patchset', default=None)
+
     # Not passed by gerrit:
     parser.add_argument('--impact', default=None)
     parser.add_argument('--dest-address', default=None)
 
+    # Automatic subscribers
+    parser.add_argument('--auto-subscribers', type=argparse.FileType('r'),
+                        default=None)
+
+    # Don't actually create the bug
+    parser.add_argument('--dryrun', dest='dryrun', action='store_true')
+    parser.add_argument('--no-dryrun', dest='dryrun', action='store_false')
+    parser.set_defaults(dryrun=False)
+
+    # Ignore duplicates, useful for testing
+    parser.add_argument('--ignore-duplicates', dest='ignore_duplicates',
+                        action='store_true')
+    parser.add_argument('--no-ignore-duplicates', dest='ignore_duplicates',
+                        action='store_false')
+    parser.set_defaults(ignore_duplicates=False)
+
     args = parser.parse_args()
+
+    # NOTE(mikal): the basic idea here is to let people watch
+    # docimpact bugs filed by people of interest. For example
+    # my team's tech writer wants to be subscribed to all the
+    # docimpact bugs we create. The config for that would be
+    # something like:
+    #
+    # author_map:
+    #     mikal@stillhq.com: rcbau
+    #     grumpy@dwarves.com: rcbau
+    #
+    # subscriber_map:
+    #     rcbau: ['mikalstill', 'grumpypants']
+    #
+    # Where the entries in the author map are email addresses
+    # to match in author lines, and the subscriber map is a
+    # list of launchpad user ids.
+    subscribers = {}
+    if args.auto_subscribers:
+        subscribers = yaml.load(args.auto_subscribers.read())
 
     # Get git log
     git_log = extract_git_log(args)
 
     # Process impacts found in git log
     if impacted(git_log, args.impact):
-        process_impact(git_log, args)
+        process_impact(git_log, args, subscribers)
 
 if __name__ == "__main__":
     main()
