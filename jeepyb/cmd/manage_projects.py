@@ -240,6 +240,7 @@ def make_ssh_wrapper(gerrit_user, gerrit_key):
 
 
 def create_github_project(defaults, options, project, description, homepage):
+    created = False
     default_has_issues = defaults.get('has-issues', False)
     default_has_downloads = defaults.get('has-downloads', False)
     default_has_wiki = defaults.get('has-wiki', False)
@@ -272,7 +273,7 @@ def create_github_project(defaults, options, project, description, homepage):
         org = orgs_dict[org_name.lower()]
     except KeyError:
         # We do not have control of this github org ignore the project.
-        return
+        return False
     try:
         repo = org.get_repo(repo_name)
     except github.GithubException:
@@ -281,6 +282,7 @@ def create_github_project(defaults, options, project, description, homepage):
                                has_issues=has_issues,
                                has_downloads=has_downloads,
                                has_wiki=has_wiki)
+        created = True
     if description:
         repo.edit(repo_name, description=description)
     if homepage:
@@ -294,6 +296,7 @@ def create_github_project(defaults, options, project, description, homepage):
         teams = org.get_teams()
         teams_dict = dict(zip([t.name.lower() for t in teams], teams))
         teams_dict['gerrit'].add_to_repos(repo)
+    return created
 
 
 # TODO(mordred): Inspect repo_dir:master for a description
@@ -595,13 +598,10 @@ def main():
                 description = (
                     find_description_override(repo_path) or description)
 
-                if 'has-github' in options or default_has_github:
-                    create_github_project(defaults, options, project,
-                                          description, homepage)
-
                 if project_created:
                     push_to_gerrit(
                         repo_path, project, push_string, remote_url, ssh_env)
+                    gerrit.replicate(project)
 
                 # If we're configured to track upstream, make sure we have
                 # upstream's refs, and then push them to the appropriate
@@ -613,6 +613,12 @@ def main():
                     process_acls(
                         acl_config, project, ACL_DIR, section,
                         remote_url, repo_path, ssh_env, gerrit, GERRIT_GITID)
+
+                if 'has-github' in options or default_has_github:
+                    created = create_github_project(
+                        defaults, options, project, description, homepage)
+                    if created:
+                        gerrit.replicate(project)
 
             except Exception:
                 log.exception(
