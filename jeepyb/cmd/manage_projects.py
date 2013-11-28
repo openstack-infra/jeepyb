@@ -302,111 +302,108 @@ def find_description_override(repo_path):
     return None
 
 
-def make_local_copy(repo_path, project_created, project, project_list,
+def make_local_copy(repo_path, project, project_list,
                     git_opts, ssh_env, upstream, GERRIT_HOST, GERRIT_PORT,
-                    project_git, GERRIT_GITID, track_upstream):
-    # If we don't have a local copy already, get one
-    if not os.path.exists(repo_path) or project_created:
-        if not os.path.exists(os.path.dirname(repo_path)):
-            os.makedirs(os.path.dirname(repo_path))
-        # Three choices
-        #  - If gerrit has it, get from gerrit
-        #  - If gerrit doesn't have it:
-        #    - If it has an upstream, clone that
-        #    - If it doesn't, create it
+                    project_git, GERRIT_GITID):
 
-        # Gerrit knows about the project, clone it
-        if project in project_list:
-            run_command(
-                "git clone %(remote_url)s %(repo_path)s" % git_opts,
-                env=ssh_env)
-            if upstream:
-                git_command(
-                    repo_path,
-                    "remote add -f upstream %(upstream)s" % git_opts)
+    # Ensure that the base location exists
+    if not os.path.exists(os.path.dirname(repo_path)):
+        os.makedirs(os.path.dirname(repo_path))
 
-        # Gerrit doesn't have it, but it has an upstream configured
-        # We're probably importing it for the first time, clone
-        # upstream, but then ongoing we want gerrit to ge origin
-        # and upstream to be only there for ongoing tracking
-        # purposes, so rename origin to upstream and add a new
-        # origin remote that points at gerrit
-        elif upstream:
-            run_command(
-                "git clone %(upstream)s %(repo_path)s" % git_opts,
-                env=ssh_env)
+    # Three choices
+    #  - If gerrit has it, get from gerrit
+    #  - If gerrit doesn't have it:
+    #    - If it has an upstream, clone that
+    #    - If it doesn't, create it
+
+    # Gerrit knows about the project, clone it
+    # TODO(mordred): there is a possible failure condition here
+    #                we should consider 'gerrit has it' to be
+    #                'gerrit repo has a master branch'
+    if project in project_list:
+        run_command(
+            "git clone %(remote_url)s %(repo_path)s" % git_opts,
+            env=ssh_env)
+        if upstream:
             git_command(
                 repo_path,
-                "fetch origin +refs/heads/*:refs/copy/heads/*",
-                env=ssh_env)
-            git_command(repo_path, "remote rename origin upstream")
-            git_command(
-                repo_path,
-                "remote add origin %(remote_url)s" % git_opts)
-            push_string = "push %s +refs/copy/heads/*:refs/heads/*"
+                "remote add -f upstream %(upstream)s" % git_opts)
+        return None
 
-        # Neither gerrit has it, nor does it have an upstream,
-        # just create a whole new one
-        else:
-            run_command("git init %s" % repo_path)
-            git_command(
-                repo_path,
-                "remote add origin %(remote_url)s" % git_opts)
-            with open(os.path.join(repo_path,
-                                   ".gitreview"),
-                      'w') as gitreview:
-                gitreview.write("""[gerrit]
+    # Gerrit doesn't have it, but it has an upstream configured
+    # We're probably importing it for the first time, clone
+    # upstream, but then ongoing we want gerrit to ge origin
+    # and upstream to be only there for ongoing tracking
+    # purposes, so rename origin to upstream and add a new
+    # origin remote that points at gerrit
+    elif upstream:
+        run_command(
+            "git clone %(upstream)s %(repo_path)s" % git_opts,
+            env=ssh_env)
+        git_command(
+            repo_path,
+            "fetch origin +refs/heads/*:refs/copy/heads/*",
+            env=ssh_env)
+        git_command(repo_path, "remote rename origin upstream")
+        git_command(
+            repo_path,
+            "remote add origin %(remote_url)s" % git_opts)
+        return "push %s +refs/copy/heads/*:refs/heads/*"
+
+    # Neither gerrit has it, nor does it have an upstream,
+    # just create a whole new one
+    else:
+        run_command("git init %s" % repo_path)
+        git_command(
+            repo_path,
+            "remote add origin %(remote_url)s" % git_opts)
+        with open(os.path.join(repo_path,
+                               ".gitreview"),
+                  'w') as gitreview:
+            gitreview.write("""[gerrit]
 host=%s
 port=%s
 project=%s
 """ % (GERRIT_HOST, GERRIT_PORT, project_git))
-            git_command(repo_path, "add .gitreview")
-            cmd = ("commit -a -m'Added .gitreview' --author='%s'"
-                   % GERRIT_GITID)
-            git_command(repo_path, cmd)
-            push_string = "push %s HEAD:refs/heads/master"
+        git_command(repo_path, "add .gitreview")
+        cmd = ("commit -a -m'Added .gitreview' --author='%s'"
+               % GERRIT_GITID)
+        git_command(repo_path, cmd)
+        return "push %s HEAD:refs/heads/master"
 
-    # We do have a local copy of it already, make sure it's
-    # in shape to have work done.
+
+def update_local_copy(repo_path, track_upstream, git_opts, ssh_env):
+    # If we're configured to track upstream but the repo
+    # does not have an upstream remote, add one
+    if (track_upstream and
+        'upstream' not in git_command_output(
+            repo_path, 'remote')[1]):
+        git_command(
+            repo_path,
+            "remote add upstream %(upstream)s" % git_opts)
+
+    # If we're configured to track upstream, make sure that
+    # the upstream URL matches the config
     else:
-        if project in project_list:
+        git_command(
+            repo_path,
+            "remote set-url upstream %(upstream)s" % git_opts)
 
-            # If we're configured to track upstream but the repo
-            # does not have an upstream remote, add one
-            if (track_upstream and
-                'upstream' not in git_command_output(
-                    repo_path, 'remote')[1]):
-                git_command(
-                    repo_path,
-                    "remote add upstream %(upstream)s" % git_opts)
+    # Now that we have any upstreams configured, fetch all of the refs
+    # we might need, pruning remote branches that no longer exist
+    git_command(
+        repo_path, "remote update --prune", env=ssh_env)
 
-            # If we're configured to track upstream, make sure that
-            # the upstream URL matches the config
-            else:
-                git_command(
-                    repo_path,
-                    "remote set-url upstream %(upstream)s" % git_opts)
-
-            # Now that we have any upstreams configured, fetch all
-            # of the refs we might need, pruning remote branches
-            # that no longer exist
-            git_command(
-                repo_path, "remote update --prune", env=ssh_env)
-
-            # TODO(mordred): This is here so that later we can
-            # inspect the master branch for meta-info
-            # Checkout master and reset to the state of origin/master
-            git_command(repo_path, "checkout -B master origin/master")
-    return push_string
+    # TODO(mordred): This is here so that later we can
+    # inspect the master branch for meta-info
+    # Checkout master and reset to the state of origin/master
+    git_command(repo_path, "checkout -B master origin/master")
 
 
 def push_to_gerrit(repo_path, project, push_string, remote_url, ssh_env):
     try:
-        git_command(repo_path,
-                    push_string % remote_url,
-                    env=ssh_env)
-        git_command(repo_path,
-                    "push --tags %s" % remote_url, env=ssh_env)
+        git_command(repo_path, push_string % remote_url, env=ssh_env)
+        git_command(repo_path, "push --tags %s" % remote_url, env=ssh_env)
     except Exception:
         log.exception(
             "Error pushing %s to Gerrit." % project)
@@ -478,7 +475,7 @@ def process_acls(acl_config, project, ACL_DIR, section,
         git_command(repo_path, 'branch -D config')
 
 
-def create_local_project(project, project_list, gerrit):
+def create_gerrit_project(project, project_list, gerrit):
     if project not in project_list:
         try:
             gerrit.createProject(project)
@@ -486,17 +483,22 @@ def create_local_project(project, project_list, gerrit):
         except Exception:
             log.exception(
                 "Exception creating %s in Gerrit." % project)
+            raise
     return False
 
 
-def create_local_mirror(LOCAL_GIT_DIR, project_git,
-                        GERRIT_SYSTEM_USER, GERRIT_SYSTEM_GROUP):
+def create_local_mirror(local_git_dir, project_git,
+                        gerrit_system_user, gerrit_system_group):
 
-    git_mirror_path = os.path.join(LOCAL_GIT_DIR, project_git)
+    git_mirror_path = os.path.join(local_git_dir, project_git)
     if not os.path.exists(git_mirror_path):
-        run_command("git --bare init %s" % git_mirror_path)
+        (ret, output) = run_command_status(
+            "git --bare init %s" % git_mirror_path)
+        if ret:
+            run_command("rm -rf git_mirror_path")
+            raise Exception(output)
         run_command("chown -R %s:%s %s"
-                    % (GERRIT_SYSTEM_USER, GERRIT_SYSTEM_GROUP,
+                    % (gerrit_system_user, gerrit_system_group,
                        git_mirror_path))
 
 
@@ -544,64 +546,78 @@ def main():
             project = section['project']
             if args.projects and project not in args.projects:
                 continue
-            options = section.get('options', dict())
-            description = section.get('description', None)
-            homepage = section.get('homepage', defaults.get('homepage', None))
-            upstream = section.get('upstream', None)
-            upstream_prefix = section.get('upstream-prefix', None)
-            track_upstream = 'track-upstream' in options
-            repo_path = os.path.join(JEEPYB_CACHE_DIR, project)
 
-            project_git = "%s.git" % project
-            remote_url = "ssh://localhost:%s/%s" % (GERRIT_PORT, project)
-            git_opts = dict(upstream=upstream,
-                            repo_path=repo_path,
-                            remote_url=remote_url)
             try:
-                acl_config = section.get('acl-config',
-                                         '%s.config' % os.path.join(ACL_DIR,
-                                                                    project))
-            except AttributeError:
-                acl_config = None
+                # Figure out all of the options
+                options = section.get('options', dict())
+                description = section.get('description', None)
+                homepage = section.get(
+                    'homepage', defaults.get('homepage', None))
+                upstream = section.get('upstream', None)
+                upstream_prefix = section.get('upstream-prefix', None)
+                track_upstream = 'track-upstream' in options
+                repo_path = os.path.join(JEEPYB_CACHE_DIR, project)
 
-            # Create the project in Gerrit first, since it will fail
-            # spectacularly if its project directory or local replica
-            # already exist on disk
-            project_created = create_local_project(
-                project, project_list, gerrit)
+                project_git = "%s.git" % project
+                remote_url = "ssh://localhost:%s/%s" % (GERRIT_PORT, project)
+                git_opts = dict(upstream=upstream,
+                                repo_path=repo_path,
+                                remote_url=remote_url)
+                acl_config = section.get(
+                    'acl-config',
+                    '%s.config' % os.path.join(ACL_DIR, project))
 
-            # Create the repo for the local git mirror
-            create_local_mirror(
-                LOCAL_GIT_DIR, project_git,
-                GERRIT_SYSTEM_USER, GERRIT_SYSTEM_GROUP)
+                # Create the project in Gerrit first, since it will fail
+                # spectacularly if its project directory or local replica
+                # already exist on disk
+                project_created = create_gerrit_project(
+                    project, project_list, gerrit)
 
-            # Make Local repo
-            push_string = make_local_copy(
-                repo_path, project_created, project, project_list,
-                git_opts, ssh_env, upstream, GERRIT_HOST, GERRIT_PORT,
-                project_git, GERRIT_GITID, track_upstream)
+                # Create the repo for the local git mirror
+                create_local_mirror(
+                    LOCAL_GIT_DIR, project_git,
+                    GERRIT_SYSTEM_USER, GERRIT_SYSTEM_GROUP)
 
-            description = find_description_override(repo_path) or description
+                if not os.path.exists(repo_path) or project_created:
+                    # We don't have a local copy already, get one
 
-            if 'has-github' in options or default_has_github:
-                create_github_project(defaults, options, project,
-                                      description, homepage)
+                    # Make Local repo
+                    push_string = make_local_copy(
+                        repo_path, project, project_list,
+                        git_opts, ssh_env, upstream, GERRIT_HOST, GERRIT_PORT,
+                        project_git, GERRIT_GITID)
+                else:
+                    # We do have a local copy of it already, make sure it's
+                    # in shape to have work done.
+                    update_local_copy(
+                        repo_path, track_upstream, git_opts, ssh_env)
 
-            if project_created:
-                push_to_gerrit(
-                    repo_path, project, push_string, remote_url, ssh_env)
+                description = (
+                    find_description_override(repo_path) or description)
 
-            # If we're configured to track upstream, make sure we have
-            # upstream's refs, and then push them to the appropriate
-            # branches in gerrit
-            if track_upstream:
-                sync_upstream(repo_path, project, ssh_env, upstream_prefix)
+                if 'has-github' in options or default_has_github:
+                    create_github_project(defaults, options, project,
+                                          description, homepage)
 
-            if acl_config:
-                process_acls(
-                    acl_config, project, ACL_DIR, section,
-                    remote_url, repo_path, ssh_env, gerrit, GERRIT_GITID)
+                if project_created:
+                    push_to_gerrit(
+                        repo_path, project, push_string, remote_url, ssh_env)
 
+                # If we're configured to track upstream, make sure we have
+                # upstream's refs, and then push them to the appropriate
+                # branches in gerrit
+                if track_upstream:
+                    sync_upstream(repo_path, project, ssh_env, upstream_prefix)
+
+                if acl_config:
+                    process_acls(
+                        acl_config, project, ACL_DIR, section,
+                        remote_url, repo_path, ssh_env, gerrit, GERRIT_GITID)
+
+            except Exception:
+                log.exception(
+                    "Problems creating %s, moving on." % project)
+                continue
     finally:
         os.unlink(ssh_env['GIT_SSH'])
 
