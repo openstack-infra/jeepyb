@@ -1,5 +1,5 @@
 argparse
-gerritlib
+gerritlib>=0.3.0
 MySQL-python
 paramiko
 PyGithub
