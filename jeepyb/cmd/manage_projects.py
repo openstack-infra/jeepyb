@@ -183,10 +183,10 @@ def _get_group_uuid(group):
 def _wait_for_group(gerrit, group):
     """Wait for up to 10 seconds for the group to be created."""
     for x in range(10):
+        time.sleep(1)
         groups = gerrit.listGroups()
         if group in groups:
             break
-        time.sleep(1)
 
 
 def get_group_uuid(gerrit, group):
