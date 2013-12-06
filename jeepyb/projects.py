@@ -132,18 +132,6 @@ def _hardcoded_git2lp(project_full_name):
     """
 
     project_map = {
-        'stackforge/cookbook-openstack-block-storage': 'openstack-chef',
-        'stackforge/cookbook-openstack-common': 'openstack-chef',
-        'stackforge/cookbook-openstack-compute': 'openstack-chef',
-        'stackforge/cookbook-openstack-dashboard': 'openstack-chef',
-        'stackforge/cookbook-openstack-identity': 'openstack-chef',
-        'stackforge/cookbook-openstack-image': 'openstack-chef',
-        'stackforge/cookbook-openstack-metering': 'openstack-chef',
-        'stackforge/cookbook-openstack-network': 'openstack-chef',
-        'stackforge/cookbook-openstack-object-storage': 'openstack-chef',
-        'stackforge/cookbook-openstack-ops-database': 'openstack-chef',
-        'stackforge/cookbook-openstack-ops-messaging': 'openstack-chef',
-        'stackforge/cookbook-openstack-orchestration': 'openstack-chef',
         'stackforge/fuel-astute': 'fuel',
         'stackforge/fuel-main': 'fuel',
         'stackforge/fuel-ostf': 'fuel',
