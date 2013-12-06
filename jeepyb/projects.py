@@ -35,8 +35,7 @@ def git2lp(project_full_name):
     try:
         return registry[project_full_name]['launchpad']
     except KeyError:
-        return _hardcoded_git2lp(project_full_name)
-        # return u.short_project_name(project_full_name)
+        return u.short_project_name(project_full_name)
 
 
 def _is_no_launchpad(project_full_name, obj_type):
@@ -116,30 +115,3 @@ def _hardcoded_is_direct_release(project_full_name):
         'stackforge/cookbook-openstack-orchestration',
         'stackforge/openstack-chef-repo',
     ]
-
-
-def _hardcoded_git2lp(project_full_name):
-    """Convert Git repo name to Launchpad project.
-
-    This function should be removed when projects.yaml will be updated.
-    To specify launchpad project name you just need add parameter 'lp' to your
-    project declaration in projects.yaml
-
-    Example:
-        - project: some/project
-          launchpad: awesomeproject
-          description: Best project ever.
-    """
-
-    project_map = {
-        'stackforge/fuel-astute': 'fuel',
-        'stackforge/fuel-main': 'fuel',
-        'stackforge/fuel-ostf': 'fuel',
-        'stackforge/fuel-web': 'fuel',
-        'stackforge/openstack-chef-repo': 'openstack-chef',
-        'stackforge/puppet-openstack_dev_env': 'puppet-openstack',
-        'stackforge/puppet-quantum': 'puppet-neutron',
-        'stackforge/puppet-savanna': 'savanna',
-    }
-    return project_map.get(project_full_name,
-                           u.short_project_name(project_full_name))
