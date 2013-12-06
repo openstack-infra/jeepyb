@@ -132,17 +132,6 @@ def _hardcoded_git2lp(project_full_name):
     """
 
     project_map = {
-        'openstack/django_openstack_auth': 'django-openstack-auth',
-        'openstack/oslo-incubator': 'oslo',
-        'openstack/python-quantumclient': 'python-neutronclient',
-        'openstack/quantum': 'neutron',
-        'openstack/savanna': 'savanna',
-        'openstack/savanna-dashboard': 'savanna',
-        'openstack/savanna-extra': 'savanna',
-        'openstack/savanna-image-elements': 'savanna',
-        'openstack/tripleo-heat-templates': 'tripleo',
-        'openstack/tripleo-image-elements': 'tripleo',
-        'openstack/tripleo-incubator': 'tripleo',
         'stackforge/cookbook-openstack-block-storage': 'openstack-chef',
         'stackforge/cookbook-openstack-common': 'openstack-chef',
         'stackforge/cookbook-openstack-compute': 'openstack-chef',
