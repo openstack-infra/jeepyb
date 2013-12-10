@@ -59,7 +59,8 @@ def add_change_merged_message(bugtask, change_url, project, commit,
                               submitter, branch, git_log, related=False):
     subject = '%s merged to %s (%s)' % (fix_or_related_fix(related),
                                         u.short_project_name(project), branch)
-    git_url = 'http://github.com/%s/commit/%s' % (project, commit)
+    git_url = 'https://git.openstack.org/cgit/%s/commit/?id=%s' % (project,
+                                                                   commit)
     body = '''Reviewed:  %s
 Committed: %s
 Submitter: %s
