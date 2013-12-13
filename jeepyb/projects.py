@@ -65,6 +65,10 @@ def is_direct_release(project_full_name):
     return direct or _hardcoded_is_direct_release(project_full_name)
 
 
+def docimpact_target(project_full_name):
+    return registry.get('docimpact-group', 'unknown')
+
+
 # The following functions should be deleted when projects.yaml will be updated
 
 def _hardcoded_is_direct_release(project_full_name):

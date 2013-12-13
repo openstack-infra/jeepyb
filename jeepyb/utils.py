@@ -45,3 +45,6 @@ class ProjectsYamlRegistry(object):
 
     def __getitem__(self, item):
         return self.configs[item]
+
+    def get(self, item, default=None):
+        return self.configs.get(item, default)

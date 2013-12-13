@@ -22,7 +22,7 @@
 #     --change-url https://review.openstack.org/55607 --project nova/ \
 #     --branch master --commit c262de4417d48be599c3a7496ef94de5c84b188c \
 #     --impact DocImpact --dest-address none@localhost --dryrun \
-#     --ignore-duplicates \
+#     --ignore-duplicates --config foo.yaml \
 #     change-merged
 #
 # But you'll need a git repository at /home/gerrit2/review_site/git/nova.git
@@ -40,6 +40,8 @@ from email.mime import text
 from launchpadlib import launchpad
 from launchpadlib import uris
 import yaml
+
+from jeepyb import projects
 
 BASE_DIR = '/home/gerrit2/review_site'
 EMAIL_TEMPLATE = """
@@ -83,7 +85,10 @@ class BugActionsDryRun(object):
         self.lpconn = lpconn
 
     def create(self, project, bug_title, bug_descr, args):
-        print('I would have created a bug, but I am in dry run mode')
+        print('I would have created a bug in %s, but I am in dry run mode.\n\n'
+              'Title: %s\n'
+              'Description:\n'
+              '%s' % (project, bug_title, bug_descr))
         return None, None
 
     def subscribe(self, buginfo, subscriber):
@@ -91,14 +96,29 @@ class BugActionsDryRun(object):
               'but I am in dry run mode' % subscriber)
 
 
-def create_bug(git_log, args, lp_project, config):
+def create_bug(git_log, args, config):
     """Create a bug for a change.
 
-    Create a launchpad bug in lp_project, titled with the first line of
+    Create a launchpad bug in a LP project, titled with the first line of
     the git commit message, with the content of the git_log prepended
     with the Gerrit review URL. Tag the bug with the name of the repository
     it came from. Don't create a duplicate bug. Returns link to the bug.
     """
+
+    # Determine what LP project to use
+    prelude = ''
+    project_name = args.project.rstrip('/')
+    lp_project = projects.docimpact_target(project_name)
+    if lp_project == 'unknown':
+        prelude = ('\n\nDear documentation bug triager. This bug was created '
+                   'here because we did not know how to map the project name '
+                   '"%s" to a launchpad project name. This indicates that the '
+                   'notify_impact config needs tweaks. You can ask the '
+                   'OpenStack infra team (#openstack-infra on freenode) for '
+                   'help if you need to.\n'
+                   % args.project)
+        lp_project = 'openstack-manuals'
+
     lpconn = launchpad.Launchpad.login_with(
         'Gerrit User Sync',
         uris.LPNET_SERVICE_ROOT,
@@ -111,9 +131,9 @@ def create_bug(git_log, args, lp_project, config):
     else:
         actions = BugActionsReal(lpconn)
 
-    lines_in_log = git_log.split("\n")
+    lines_in_log = git_log.split('\n')
     bug_title = lines_in_log[4]
-    bug_descr = args.change_url + '\n' + git_log
+    bug_descr = args.change_url + prelude + '\n' + git_log
     project = lpconn.projects[lp_project]
 
     # check for existing bugs by searching for the title, to avoid
@@ -153,7 +173,7 @@ def process_impact(git_log, args, config):
     """
     if args.impact.lower() == 'docimpact':
         if args.hook == "change-merged":
-            create_bug(git_log, args, 'openstack-manuals', config)
+            create_bug(git_log, args, config)
         return
 
     email_content = EMAIL_TEMPLATE % (args.impact,
@@ -206,7 +226,8 @@ def main():
     parser.add_argument('--impact', default=None)
     parser.add_argument('--dest-address', default=None)
 
-    # Automatic config
+    # Automatic config: config contains a mapping of email addresses to
+    # subscribers.
     parser.add_argument('--config', type=argparse.FileType('r'),
                         default=None)
 
