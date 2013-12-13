@@ -60,6 +60,7 @@ def is_newbie(uploader):
     data = cursor.fetchone()
     if data:
         if data[0] == "1":
+            logger.info('We found a newbie: %s', uploader)
             return True
         else:
             return False
@@ -131,11 +132,15 @@ def main():
     # for Welcome Message
     parser.add_argument('user', help='The gerrit admin user')
     parser.add_argument('ssh_key', help='The gerrit admin SSH key file')
+    # Don't actually post the message
+    parser.add_argument('--dryrun', dest='dryrun', action='store_true')
+    parser.add_argument('--no-dryrun', dest='dryrun', action='store_false')
+    parser.set_defaults(dryrun=False)
 
     args = parser.parse_args()
 
     # they're a first-timer, post the message on 1st patchset
-    if is_newbie(args.uploader) and args.patchset == 1:
+    if is_newbie(args.uploader) and args.patchset == 1 and not args.dryrun:
         post_message(args.change, args.user, args.ssh_key)
 
 if __name__ == "__main__":
