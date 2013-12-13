@@ -272,7 +272,7 @@ def find_bugs(launchpad, git_log, args):
     if p.is_no_launchpad_bugs(project):
         return []
 
-    project = p.git2lp(project)
+    project = p.project_to_group(project)
 
     part1 = r'^[\t ]*(?P<prefix>[-\w]+)?[\s:]*'
     part2 = r'(?:\b(?:bug|lp)\b[\s#:]*)+'
