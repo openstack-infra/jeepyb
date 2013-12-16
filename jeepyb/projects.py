@@ -132,14 +132,7 @@ def _hardcoded_git2lp(project_full_name):
     """
 
     project_map = {
-        'openstack/api-site': 'openstack-api-site',
-        'openstack/compute-api': 'openstack-api-site',
-        'openstack/database-api': 'openstack-api-site',
         'openstack/django_openstack_auth': 'django-openstack-auth',
-        'openstack/identity-api': 'openstack-api-site',
-        'openstack/image-api': 'openstack-api-site',
-        'openstack/netconn-api': 'openstack-api-site',
-        'openstack/object-api': 'openstack-api-site',
         'openstack/oslo-incubator': 'oslo',
         'openstack/python-quantumclient': 'python-neutronclient',
         'openstack/quantum': 'neutron',
@@ -150,7 +143,6 @@ def _hardcoded_git2lp(project_full_name):
         'openstack/tripleo-heat-templates': 'tripleo',
         'openstack/tripleo-image-elements': 'tripleo',
         'openstack/tripleo-incubator': 'tripleo',
-        'openstack/volume-api': 'openstack-api-site',
         'stackforge/cookbook-openstack-block-storage': 'openstack-chef',
         'stackforge/cookbook-openstack-common': 'openstack-chef',
         'stackforge/cookbook-openstack-compute': 'openstack-chef',
