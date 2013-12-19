@@ -91,7 +91,7 @@ class BugActionsDryRun(object):
               'but I am in dry run mode' % subscriber)
 
 
-def create_bug(git_log, args, lp_project, subscribers):
+def create_bug(git_log, args, lp_project, config):
     """Create a bug for a change.
 
     Create a launchpad bug in lp_project, titled with the first line of
@@ -127,23 +127,22 @@ def create_bug(git_log, args, lp_project, subscribers):
 
         # If the author of the merging patch matches our configured
         # subscriber lists, then subscribe the configured victims.
-        for email_address in subscribers.get('author_map', {}):
+        for email_address in config.get('author_map', {}):
             email_re = re.compile('^Author:.*%s.*' % email_address)
             for line in bug_descr.split('\n'):
                 m = email_re.match(line)
                 if m:
-                    author_class = subscribers['author_map'][email_address]
+                    author_class = config['author_map'][email_address]
 
         if author_class:
-            subscribers = \
-                subscribers.get('subscriber_map', {}).get(author_class, [])
-            for subscriber in subscribers:
+            config = config.get('subscriber_map', {}).get(author_class, [])
+            for subscriber in config:
                 actions.subscribe(buginfo, subscriber)
 
     return buglink
 
 
-def process_impact(git_log, args, subscribers):
+def process_impact(git_log, args, config):
     """Process DocImpact flag.
 
     If the 'DocImpact' flag is present for a change that is merged,
@@ -154,7 +153,7 @@ def process_impact(git_log, args, subscribers):
     """
     if args.impact.lower() == 'docimpact':
         if args.hook == "change-merged":
-            create_bug(git_log, args, 'openstack-manuals', subscribers)
+            create_bug(git_log, args, 'openstack-manuals', config)
         return
 
     email_content = EMAIL_TEMPLATE % (args.impact,
@@ -207,8 +206,8 @@ def main():
     parser.add_argument('--impact', default=None)
     parser.add_argument('--dest-address', default=None)
 
-    # Automatic subscribers
-    parser.add_argument('--auto-subscribers', type=argparse.FileType('r'),
+    # Automatic config
+    parser.add_argument('--config', type=argparse.FileType('r'),
                         default=None)
 
     # Don't actually create the bug
@@ -241,16 +240,16 @@ def main():
     # Where the entries in the author map are email addresses
     # to match in author lines, and the subscriber map is a
     # list of launchpad user ids.
-    subscribers = {}
-    if args.auto_subscribers:
-        subscribers = yaml.load(args.auto_subscribers.read())
+    config = {}
+    if args.config:
+        config = yaml.load(args.config.read())
 
     # Get git log
     git_log = extract_git_log(args)
 
     # Process impacts found in git log
     if impacted(git_log, args.impact):
-        process_impact(git_log, args, subscribers)
+        process_impact(git_log, args, config)
 
 if __name__ == "__main__":
     main()
