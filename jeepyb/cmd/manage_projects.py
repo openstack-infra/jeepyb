@@ -173,11 +173,13 @@ def push_acl_config(project, remote_url, repo_path, gitid, env={}):
 def _get_group_uuid(group):
     """Wait for up to 10 seconds for the group to be created in the DB."""
     query = "SELECT group_uuid FROM account_groups WHERE name = %s"
+    con = jeepyb.gerritdb.connect()
     for x in range(10):
-        cursor = jeepyb.gerritdb.connect().cursor()
+        cursor = con.cursor()
         cursor.execute(query, group)
         data = cursor.fetchone()
         cursor.close()
+        con.commit()
         if data:
             return data[0]
         time.sleep(1)
