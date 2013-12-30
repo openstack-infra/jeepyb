@@ -70,7 +70,7 @@ def update_spec(launchpad, project, name, subject, link, topic=None):
     if p.is_no_launchpad_blueprints(project):
         return
 
-    project = p.git2lp(project)
+    project = p.project_to_group(project)
     spec = launchpad.projects[project].getSpecification(name=name)
     if not spec:
         return

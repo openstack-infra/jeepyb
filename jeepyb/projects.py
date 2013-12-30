@@ -31,11 +31,10 @@ registry = u.ProjectsYamlRegistry('/home/gerrit2/projects.yaml',
                                   'PROJECTS_YAML')
 
 
-def git2lp(project_full_name):
-    try:
-        return registry[project_full_name]['launchpad']
-    except KeyError:
-        return u.short_project_name(project_full_name)
+def project_to_group(project_full_name):
+    return registry[project_full_name].get(
+        'group', registry[project_full_name].get(
+            'launchpad', u.short_project_name(project_full_name)))
 
 
 def _is_no_launchpad(project_full_name, obj_type):
