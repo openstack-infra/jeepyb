@@ -31,6 +31,9 @@ CGIT_REPOS = os.environ.get('CGIT_REPOS',
                             '/etc/cgitrepos')
 REPO_PATH = os.environ.get('REPO_PATH',
                            '/var/lib/git')
+SCRATCH_SUBPATH = os.environ.get('SCRATCH_SUBPATH')
+SCRATCH_OWNER = os.environ.get('SCRATCH_OWNER', 'scratch')
+SCRATCH_GROUP = os.environ.get('SCRATCH_GROUP', 'scratch')
 CGIT_USER = os.environ.get('CGIT_USER', 'cgit')
 CGIT_GROUP = os.environ.get('CGIT_GROUP', 'cgit')
 
@@ -45,6 +48,20 @@ def main():
         assert name not in names
         names.add(name)
         gitorgs.setdefault(org, []).append((name, description))
+    if SCRATCH_SUBPATH:
+        assert SCRATCH_SUBPATH not in gitorgs
+        scratch_path = os.path.join('REPO_PATH', 'SCRATCH_SUBPATH')
+        for org in gitorgs:
+            scratch_dir = os.path.join(scratch_path, org)
+            if not os.path.isdir(scratch_dir):
+                os.makedirs(scratch_dir)
+            projects = gitorgs[org]
+            for (name, description) in projects:
+                scratch_repo = "%s.git" % os.path.join(scratch_dir, name)
+                subprocess.call(['git', 'init', '--bare', scratch_repo])
+                subprocess.call(['chown', '-R', '%s:%s'
+                                 % (SCRATCH_OWNER, SCRATCH_GROUP),
+                                 scratch_repo])
     for org in gitorgs:
         if not os.path.isdir('%s/%s' % (REPO_PATH, org)):
             os.makedirs('%s/%s' % (REPO_PATH, org))
