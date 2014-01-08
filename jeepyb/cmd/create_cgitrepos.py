@@ -50,7 +50,7 @@ def main():
         gitorgs.setdefault(org, []).append((name, description))
     if SCRATCH_SUBPATH:
         assert SCRATCH_SUBPATH not in gitorgs
-        scratch_path = os.path.join('REPO_PATH', 'SCRATCH_SUBPATH')
+        scratch_path = os.path.join(REPO_PATH, SCRATCH_SUBPATH)
         for org in gitorgs:
             scratch_dir = os.path.join(scratch_path, org)
             if not os.path.isdir(scratch_dir):
