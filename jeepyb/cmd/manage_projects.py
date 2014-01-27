@@ -235,21 +235,16 @@ def make_ssh_wrapper(gerrit_user, gerrit_key):
     return dict(GIT_SSH=name)
 
 
-def create_github_project(defaults, options, project, description, homepage):
+def create_github_project(
+        default_has_issues, default_has_downloads, default_has_wiki,
+        github_secure_config, options, project, description, homepage):
     created = False
-    default_has_issues = defaults.get('has-issues', False)
-    default_has_downloads = defaults.get('has-downloads', False)
-    default_has_wiki = defaults.get('has-wiki', False)
     has_issues = 'has-issues' in options or default_has_issues
     has_downloads = 'has-downloads' in options or default_has_downloads
     has_wiki = 'has-wiki' in options or default_has_wiki
 
-    GITHUB_SECURE_CONFIG = defaults.get(
-        'github-config',
-        '/etc/github/github-projects.secure.config')
-
     secure_config = ConfigParser.ConfigParser()
-    secure_config.read(GITHUB_SECURE_CONFIG)
+    secure_config.read(github_secure_config)
 
     # Project creation doesn't work via oauth
     ghub = github.Github(secure_config.get("github", "username"),
@@ -532,6 +527,13 @@ def main():
     GERRIT_GITID = defaults.get('gerrit-committer')
     GERRIT_SYSTEM_USER = defaults.get('gerrit-system-user', 'gerrit2')
     GERRIT_SYSTEM_GROUP = defaults.get('gerrit-system-group', 'gerrit2')
+    DEFAULT_HOMEPAGE = defaults.get('homepage', None)
+    DEFAULT_HAS_ISSUES = defaults.get('has-issues', False)
+    DEFAULT_HAS_DOWNLOADS = defaults.get('has-downloads', False)
+    DEFAULT_HAS_WIKI = defaults.get('has-wiki', False)
+    GITHUB_SECURE_CONFIG = defaults.get(
+        'github-config',
+        '/etc/github/github-projects.secure.config')
 
     gerrit = gerritlib.gerrit.Gerrit('localhost',
                                      GERRIT_USER,
@@ -550,8 +552,7 @@ def main():
                 # Figure out all of the options
                 options = section.get('options', dict())
                 description = section.get('description', None)
-                homepage = section.get(
-                    'homepage', defaults.get('homepage', None))
+                homepage = section.get('homepage', DEFAULT_HOMEPAGE)
                 upstream = section.get('upstream', None)
                 upstream_prefix = section.get('upstream-prefix', None)
                 track_upstream = 'track-upstream' in options
@@ -612,7 +613,9 @@ def main():
 
                 if 'has-github' in options or default_has_github:
                     created = create_github_project(
-                        defaults, options, project, description, homepage)
+                        DEFAULT_HAS_ISSUES, DEFAULT_HAS_DOWNLOADS,
+                        DEFAULT_HAS_WIKI, GITHUB_SECURE_CONFIG,
+                        options, project, description, homepage)
                     if created:
                         gerrit.replicate(project)
 
