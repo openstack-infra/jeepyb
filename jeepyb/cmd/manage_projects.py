@@ -14,21 +14,24 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
-# manage_projects.py reads a project config file called projects.yaml
+# manage_projects.py reads a config file called projects.ini
 # It should look like:
 
-# - homepage: http://openstack.org
-#   gerrit-host: review.openstack.org
-#   local-git-dir: /var/lib/git
-#   gerrit-key: /home/gerrit2/review_site/etc/ssh_host_rsa_key
-#   gerrit-committer: Project Creator <openstack-infra@lists.openstack.org>
-#   has-github: True
-#   has-wiki: False
-#   has-issues: False
-#   has-downloads: False
-#   acl-dir: /home/gerrit2/acls
-#   acl-base: /home/gerrit2/acls/project.config
-# ---
+# [projects]
+# homepage=http://openstack.org
+# gerrit-host=review.openstack.org
+# local-git-dir=/var/lib/git
+# gerrit-key=/home/gerrit2/review_site/etc/ssh_host_rsa_key
+# gerrit-committer=Project Creator <openstack-infra@lists.openstack.org>
+# has-github=True
+# has-wiki=False
+# has-issues=False
+# has-downloads=False
+# acl-dir=/home/gerrit2/acls
+# acl-base=/home/gerrit2/acls/project.config
+#
+# manage_projects.py reads a project listing file called projects.yaml
+# It should look like:
 # - project: PROJECT_NAME
 #   options:
 #    - has-wiki
@@ -496,6 +499,15 @@ def create_local_mirror(local_git_dir, project_git,
                        git_mirror_path))
 
 
+def get_option(options, section, key, default):
+    if options.has_option(section, key):
+        if type(default) is bool:
+            return options.getboolean(section, key)
+        else:
+            return options.get(section, key)
+    return default
+
+
 def main():
     parser = argparse.ArgumentParser(description='Manage projects')
     parser.add_argument('-v', dest='verbose', action='store_true',
@@ -514,26 +526,65 @@ def main():
     PROJECTS_YAML = os.environ.get('PROJECTS_YAML',
                                    '/home/gerrit2/projects.yaml')
     configs = [config for config in yaml.load_all(open(PROJECTS_YAML))]
-    defaults = configs[0][0]
-    default_has_github = defaults.get('has-github', True)
 
-    LOCAL_GIT_DIR = defaults.get('local-git-dir', '/var/lib/git')
-    JEEPYB_CACHE_DIR = defaults.get('jeepyb-cache-dir', '/var/lib/jeepyb')
-    ACL_DIR = defaults.get('acl-dir')
-    GERRIT_HOST = defaults.get('gerrit-host')
-    GERRIT_PORT = int(defaults.get('gerrit-port', '29418'))
-    GERRIT_USER = defaults.get('gerrit-user')
-    GERRIT_KEY = defaults.get('gerrit-key')
-    GERRIT_GITID = defaults.get('gerrit-committer')
-    GERRIT_SYSTEM_USER = defaults.get('gerrit-system-user', 'gerrit2')
-    GERRIT_SYSTEM_GROUP = defaults.get('gerrit-system-group', 'gerrit2')
-    DEFAULT_HOMEPAGE = defaults.get('homepage', None)
-    DEFAULT_HAS_ISSUES = defaults.get('has-issues', False)
-    DEFAULT_HAS_DOWNLOADS = defaults.get('has-downloads', False)
-    DEFAULT_HAS_WIKI = defaults.get('has-wiki', False)
-    GITHUB_SECURE_CONFIG = defaults.get(
-        'github-config',
-        '/etc/github/github-projects.secure.config')
+    PROJECTS_INI = os.environ.get('PROJECTS_INI',
+                                  '/home/gerrit2/projects.ini')
+    if os.path.exists(PROJECTS_INI):
+        # New-style - supports projects.ini
+        projects_yaml_list = configs[0]
+        defaults = ConfigParser.ConfigParser()
+        defaults.read(PROJECTS_INI)
+
+        default_has_github = get_option(
+            defaults, 'projects', 'has-github', True)
+
+        LOCAL_GIT_DIR = get_option(
+            defaults, 'projects', 'local-git-dir', '/var/lib/git')
+        JEEPYB_CACHE_DIR = get_option(
+            defaults, 'projects', 'jeepyb-cache-dir', '/var/lib/jeepyb')
+        ACL_DIR = defaults.get('projects', 'acl-dir')
+        GERRIT_HOST = defaults.get('projects', 'gerrit-host')
+        GERRIT_PORT = int(get_option(
+            defaults, 'projects', 'gerrit-port', '29418'))
+        GERRIT_USER = defaults.get('projects', 'gerrit-user')
+        GERRIT_KEY = defaults.get('projects', 'gerrit-key')
+        GERRIT_GITID = defaults.get('projects', 'gerrit-committer')
+        GERRIT_SYSTEM_USER = get_option(
+            defaults, 'projects', 'gerrit-system-user', 'gerrit2')
+        GERRIT_SYSTEM_GROUP = get_option(
+            defaults, 'projects', 'gerrit-system-group', 'gerrit2')
+        DEFAULT_HOMEPAGE = get_option(defaults, 'projects', 'homepage', None)
+        DEFAULT_HAS_ISSUES = get_option(
+            defaults, 'projects', 'has-issues', False)
+        DEFAULT_HAS_DOWNLOADS = get_option(
+            defaults, 'projects', 'has-downloads', False)
+        DEFAULT_HAS_WIKI = get_option(defaults, 'projects', 'has-wiki', False)
+        GITHUB_SECURE_CONFIG = get_option(
+            defaults, 'projects', 'github-config',
+            '/etc/github/github-projects.secure.config')
+    else:
+        # Old-style - embedded
+        projects_yaml_list = configs[1]
+        defaults = configs[0][0]
+        default_has_github = defaults.get('has-github', True)
+
+        LOCAL_GIT_DIR = defaults.get('local-git-dir', '/var/lib/git')
+        JEEPYB_CACHE_DIR = defaults.get('jeepyb-cache-dir', '/var/lib/jeepyb')
+        ACL_DIR = defaults.get('acl-dir')
+        GERRIT_HOST = defaults.get('gerrit-host')
+        GERRIT_PORT = int(defaults.get('gerrit-port', '29418'))
+        GERRIT_USER = defaults.get('gerrit-user')
+        GERRIT_KEY = defaults.get('gerrit-key')
+        GERRIT_GITID = defaults.get('gerrit-committer')
+        GERRIT_SYSTEM_USER = defaults.get('gerrit-system-user', 'gerrit2')
+        GERRIT_SYSTEM_GROUP = defaults.get('gerrit-system-group', 'gerrit2')
+        DEFAULT_HOMEPAGE = defaults.get('homepage', None)
+        DEFAULT_HAS_ISSUES = defaults.get('has-issues', False)
+        DEFAULT_HAS_DOWNLOADS = defaults.get('has-downloads', False)
+        DEFAULT_HAS_WIKI = defaults.get('has-wiki', False)
+        GITHUB_SECURE_CONFIG = defaults.get(
+            'github-config',
+            '/etc/github/github-projects.secure.config')
 
     gerrit = gerritlib.gerrit.Gerrit('localhost',
                                      GERRIT_USER,
@@ -543,7 +594,7 @@ def main():
     ssh_env = make_ssh_wrapper(GERRIT_USER, GERRIT_KEY)
     try:
 
-        for section in configs[1]:
+        for section in projects_yaml_list:
             project = section['project']
             if args.projects and project not in args.projects:
                 continue
