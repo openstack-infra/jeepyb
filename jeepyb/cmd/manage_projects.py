@@ -176,7 +176,7 @@ def _get_group_uuid(group):
     con = jeepyb.gerritdb.connect()
     for x in range(10):
         cursor = con.cursor()
-        cursor.execute(query, group)
+        cursor.execute(query, (group,))
         data = cursor.fetchone()
         cursor.close()
         con.commit()
