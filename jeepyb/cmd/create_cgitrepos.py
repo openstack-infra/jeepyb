@@ -43,10 +43,11 @@ def main():
     gitorgs = {}
     names = set()
     for entry in config:
-        (org, name) = entry['project'].split('/')
+        project = entry['project']
+        (org, name) = project.split('/')
         description = entry.get('description', name)
-        assert name not in names
-        names.add(name)
+        assert project not in names
+        names.add(project)
         gitorgs.setdefault(org, []).append((name, description))
     if SCRATCH_SUBPATH:
         assert SCRATCH_SUBPATH not in gitorgs
