@@ -1,3 +1,5 @@
+pbr>=0.5.21,<1.0
+
 argparse
 gerritlib>=0.3.0
 MySQL-python
