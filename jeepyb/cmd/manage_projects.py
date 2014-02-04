@@ -525,13 +525,13 @@ def main():
 
     PROJECTS_YAML = os.environ.get('PROJECTS_YAML',
                                    '/home/gerrit2/projects.yaml')
-    configs = [config for config in yaml.load_all(open(PROJECTS_YAML))]
+    yaml_docs = [config for config in yaml.safe_load_all(open(PROJECTS_YAML))]
 
     PROJECTS_INI = os.environ.get('PROJECTS_INI',
                                   '/home/gerrit2/projects.ini')
     if os.path.exists(PROJECTS_INI):
         # New-style - supports projects.ini
-        projects_yaml_list = configs[0]
+        projects_yaml_list = yaml_docs[0]
         defaults = ConfigParser.ConfigParser()
         defaults.read(PROJECTS_INI)
 
@@ -564,8 +564,8 @@ def main():
             '/etc/github/github-projects.secure.config')
     else:
         # Old-style - embedded
-        projects_yaml_list = configs[1]
-        defaults = configs[0][0]
+        projects_yaml_list = yaml_docs[1]
+        defaults = yaml_docs[0][0]
         default_has_github = defaults.get('has-github', True)
 
         LOCAL_GIT_DIR = defaults.get('local-git-dir', '/var/lib/git')

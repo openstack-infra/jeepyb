@@ -27,6 +27,8 @@ import yaml
 
 PROJECTS_YAML = os.environ.get('PROJECTS_YAML',
                                '/home/cgit/projects.yaml')
+PROJECTS_INI = os.environ.get('PROJECTS_INI',
+                              '/home/gerrit2/projects.ini')
 CGIT_REPOS = os.environ.get('CGIT_REPOS',
                             '/etc/cgitrepos')
 REPO_PATH = os.environ.get('REPO_PATH',
@@ -39,7 +41,11 @@ CGIT_GROUP = os.environ.get('CGIT_GROUP', 'cgit')
 
 
 def main():
-    (defaults, config) = tuple(yaml.safe_load_all(open(PROJECTS_YAML)))
+    yaml_docs = [config for config in yaml.safe_load_all(open(PROJECTS_YAML))]
+    if os.path.exists(PROJECTS_INI):
+        config = yaml_docs[0]
+    else:
+        config = yaml_docs[1]
     gitorgs = {}
     names = set()
     for entry in config:

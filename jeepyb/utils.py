@@ -27,15 +27,20 @@ class ProjectsYamlRegistry(object):
     It could be used as dict 'project name' -> 'project properties'.
     """
 
-    def __init__(self, file_path, env_name=None):
+    def __init__(self, file_path, env_name=None, single_doc=True):
         self.file_path = file_path
         self.env_name = env_name
+        self.single_doc = single_doc
 
         self._parse_file()
 
     def _parse_file(self):
         file_path = os.environ.get(self.env_name, self.file_path)
-        configs_list = [config for config in yaml.load_all(open(file_path))][1]
+        yaml_docs = [config for config in yaml.safe_load_all(open(file_path))]
+        if self.single_doc:
+            configs_list = yaml_docs[0]
+        else:
+            configs_list = yaml_docs[1]
 
         configs = {}
         for section in configs_list:
