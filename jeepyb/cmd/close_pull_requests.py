@@ -42,7 +42,8 @@ import ConfigParser
 import github
 import logging
 import os
-import yaml
+
+import jeepyb.utils as u
 
 MESSAGE = """Thank you for contributing to %(project)s!
 
@@ -57,20 +58,12 @@ def main():
 
     logging.basicConfig(level=logging.ERROR)
 
-    PROJECTS_YAML = os.environ.get('PROJECTS_YAML',
-                                   '/home/gerrit2/projects.yaml')
-    PROJECTS_INI = os.environ.get('PROJECTS_INI',
-                                  '/home/gerrit2/projects.ini')
     GITHUB_SECURE_CONFIG = os.environ.get('GITHUB_SECURE_CONFIG',
                                           '/etc/github/github.secure.config')
 
     secure_config = ConfigParser.ConfigParser()
     secure_config.read(GITHUB_SECURE_CONFIG)
-    yaml_docs = [config for config in yaml.load_all(open(PROJECTS_YAML))]
-    if os.path.exists(PROJECTS_INI):
-        config = yaml_docs[0]
-    else:
-        config = yaml_docs[1]
+    registry = u.ProjectsRegistry()
 
     if secure_config.has_option("github", "oauth_token"):
         ghub = github.Github(secure_config.get("github", "oauth_token"))
@@ -80,7 +73,7 @@ def main():
 
     orgs = ghub.get_user().get_orgs()
     orgs_dict = dict(zip([o.login.lower() for o in orgs], orgs))
-    for section in config:
+    for section in registry.configs_list:
         project = section['project']
 
         # Make sure we're supposed to close pull requests for this project:

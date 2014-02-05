@@ -12,8 +12,12 @@
 # License for the specific language governing permissions and limitations
 # under the License.
 
+import ConfigParser
 import os
 import yaml
+
+PROJECTS_INI = os.environ.get('PROJECTS_INI', '/home/gerrit2/projects.ini')
+PROJECTS_YAML = os.environ.get('PROJECTS_YAML', '/home/gerrit2/projects.yaml')
 
 
 def short_project_name(full_project_name):
@@ -21,29 +25,36 @@ def short_project_name(full_project_name):
     return full_project_name.split('/')[-1]
 
 
-class ProjectsYamlRegistry(object):
-    """review.projects.yaml style config file parser.
+class ProjectsRegistry(object):
+    """read config from ini or yaml file.
 
     It could be used as dict 'project name' -> 'project properties'.
     """
-
-    def __init__(self, file_path, env_name=None, single_doc=True):
-        self.file_path = file_path
-        self.env_name = env_name
+    def __init__(self, yaml_file=PROJECTS_YAML, single_doc=True):
+        self.yaml_doc = [c for c in yaml.safe_load_all(open(yaml_file))]
         self.single_doc = single_doc
 
+        self.configs_list = []
+        self.defaults = {}
         self._parse_file()
 
     def _parse_file(self):
-        file_path = os.environ.get(self.env_name, self.file_path)
-        yaml_docs = [config for config in yaml.safe_load_all(open(file_path))]
         if self.single_doc:
-            configs_list = yaml_docs[0]
+            self.configs_list = self.yaml_doc[0]
         else:
-            configs_list = yaml_docs[1]
+            self.configs_list = self.yaml_doc[1]
+
+        if os.path.exists(PROJECTS_INI):
+            self.defaults = ConfigParser.ConfigParser()
+            self.defaults.read(PROJECTS_INI)
+        else:
+            try:
+                self.defaults = self.yaml_doc[0][0]
+            except IndexError:
+                pass
 
         configs = {}
-        for section in configs_list:
+        for section in self.configs_list:
             configs[section['project']] = section
 
         self.configs = configs
@@ -56,3 +67,18 @@ class ProjectsYamlRegistry(object):
             return self.configs[project].get(item, default)
         else:
             return default
+
+    def get(self, item, default=None):
+        return self.configs.get(item, default)
+
+    def get_defaults(self, item, default=None):
+        if os.path.exists(PROJECTS_INI):
+            section = 'projects'
+            if self.defaults.has_option(section, item):
+                if type(default) == bool:
+                    return self.defaults.getboolean(section, item)
+                else:
+                    return self.defaults.get(section, item)
+            return default
+        else:
+            return self.defaults.get(item, default)
