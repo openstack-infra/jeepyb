@@ -35,7 +35,6 @@ import jeepyb.gerritdb
 BASE_DIR = '/home/gerrit2/review_site'
 
 logger = logging.getLogger('welcome_reviews')
-logger.setLevel(logging.INFO)
 
 
 def is_newbie(uploader):
@@ -137,9 +136,16 @@ def main():
     # Don't actually post the message
     parser.add_argument('--dryrun', dest='dryrun', action='store_true')
     parser.add_argument('--no-dryrun', dest='dryrun', action='store_false')
+    parser.add_argument('-v', dest='verbose', action='store_true',
+                        help='verbose output')
     parser.set_defaults(dryrun=False)
 
     args = parser.parse_args()
+
+    if args.verbose:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.ERROR)
 
     # they're a first-timer, post the message on 1st patchset
     if is_newbie(args.uploader) and args.patchset == 1 and not args.dryrun:
