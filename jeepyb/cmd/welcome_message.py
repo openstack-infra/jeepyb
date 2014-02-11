@@ -124,11 +124,13 @@ def main():
     parser.add_argument('--project', default=None)
     parser.add_argument('--branch', default=None)
     parser.add_argument('--commit', default=None)
+    parser.add_argument('--topic', default=None)
     # change-merged
     parser.add_argument('--submitter', default=None)
     # patchset-created
     parser.add_argument('--uploader', default=None)
     parser.add_argument('--patchset', default=None)
+    parser.add_argument('--is-draft', default=None)
     # for Welcome Message
     parser.add_argument('user', help='The gerrit admin user')
     parser.add_argument('ssh_key', help='The gerrit admin SSH key file')
