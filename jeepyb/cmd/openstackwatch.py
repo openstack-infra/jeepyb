@@ -139,7 +139,7 @@ def generate_rss(javascript, project=""):
     rss = PyRSS2Gen.RSS2(
         title=title,
         link="http://github.com/chmouel/openstackwatch.rss",
-        description="The latest reviews about Openstack, straight "
+        description="The latest reviews about OpenStack, straight "
                     "from Gerrit.",
         lastBuildDate=datetime.datetime.now()
     )
