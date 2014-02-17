@@ -76,8 +76,8 @@ def run_command(cmd, status=False, env={}):
     p = subprocess.Popen(cmd_list, stdout=subprocess.PIPE,
                          stderr=subprocess.STDOUT, env=newenv)
     (out, nothing) = p.communicate()
-    log.debug("Return code: %s" % p.returncode)
-    log.debug("Command said: %s" % out.strip())
+    log.info("Return code: %s" % p.returncode)
+    log.info("Command said: %s" % out.strip())
     if status:
         return (p.returncode, out.strip())
     return out.strip()
