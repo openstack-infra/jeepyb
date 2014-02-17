@@ -512,6 +512,8 @@ def main():
     parser = argparse.ArgumentParser(description='Manage projects')
     parser.add_argument('-v', dest='verbose', action='store_true',
                         help='verbose output')
+    parser.add_argument('-d', dest='debug', action='store_true',
+                        help='debug output')
     parser.add_argument('--nocleanup', action='store_true',
                         help='do not remove temp directories')
     parser.add_argument('projects', metavar='project', nargs='*',
@@ -519,6 +521,8 @@ def main():
     args = parser.parse_args()
 
     if args.verbose:
+        logging.basicConfig(level=logging.INFO)
+    elif args.debug:
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.ERROR)
