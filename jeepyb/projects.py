@@ -65,7 +65,8 @@ def is_direct_release(project_full_name):
 
 
 def docimpact_target(project_full_name):
-    return registry.get('docimpact-group', 'unknown')
+    return registry.get_project_item(project_full_name, 'docimpact-group',
+                                     'unknown')
 
 
 # The following functions should be deleted when projects.yaml will be updated

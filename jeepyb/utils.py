@@ -51,5 +51,8 @@ class ProjectsYamlRegistry(object):
     def __getitem__(self, item):
         return self.configs[item]
 
-    def get(self, item, default=None):
-        return self.configs.get(item, default)
+    def get_project_item(self, project, item, default=None):
+        if project in self.configs:
+            return self.configs[project].get(item, default)
+        else:
+            return default
