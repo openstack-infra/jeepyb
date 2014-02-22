@@ -414,12 +414,12 @@ def sync_upstream(repo_path, project, ssh_env, upstream_prefix):
     # a local branch of, optionally prefixed with the
     # upstream prefix value
     for branch in git_command_output(
-            repo_path, "branch -a")[1].split():
+            repo_path, "branch -a")[1].split('\n'):
         if not branch.strip().startswith("remotes/upstream"):
             continue
         if "->" in branch:
             continue
-        local_branch = branch[len('remotes/upstream/'):]
+        local_branch = branch.split()[0][len('remotes/upstream/'):]
         if upstream_prefix:
             local_branch = "%s/%s" % (
                 upstream_prefix, local_branch)
