@@ -254,7 +254,7 @@ def find_bugs(launchpad, git_log, args):
     Our regular expression is composed of three major parts:
     part1: Matches only at start-of-line (required). Optionally matches any
            word or hyphen separated words.
-    part2: Matches the words 'bug' or 'lp' on a word boundry (required).
+    part2: Matches the words 'bug' or 'lp' on a word boundary (required).
     part3: Matches a whole number (required).
 
     The following patterns will be matched properly:
