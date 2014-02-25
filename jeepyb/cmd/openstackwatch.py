@@ -30,9 +30,9 @@ import json
 import os
 import sys
 import time
-import urllib
 
 import PyRSS2Gen
+import six.moves.urllib.parse as urlparse
 
 PROJECTS = ['openstack/nova', 'openstack/keystone', 'opensack/swift']
 JSON_URL = 'https://review.openstack.org/query'
@@ -94,7 +94,7 @@ def get_javascript(project=None):
     url = CONFIG['json_url']
     if project:
         url += "+project:" + project
-    fp = urllib.urlretrieve(url)
+    fp = urlparse.urlretrieve(url)
     ret = open(fp[0]).read()
     return ret
 
