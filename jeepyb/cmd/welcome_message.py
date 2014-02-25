@@ -136,7 +136,7 @@ def main():
     # Don't actually post the message
     parser.add_argument('--dryrun', dest='dryrun', action='store_true')
     parser.add_argument('--no-dryrun', dest='dryrun', action='store_false')
-    parser.add_argument('-v', dest='verbose', action='store_true',
+    parser.add_argument('-v', '--verbose', dest='verbose', action='store_true',
                         help='verbose output')
     parser.set_defaults(dryrun=False)
 
