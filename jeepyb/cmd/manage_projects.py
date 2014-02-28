@@ -370,26 +370,32 @@ project=%s
 
 
 def update_local_copy(repo_path, track_upstream, git_opts, ssh_env):
-    # If we're configured to track upstream but the repo
-    # does not have an upstream remote, add one
-    if (track_upstream and
-        'upstream' not in git_command_output(
-            repo_path, 'remote')[1]):
-        git_command(
-            repo_path,
-            "remote add upstream %(upstream)s" % git_opts)
+    has_upstream_remote = (
+        'upstream' in git_command_output(repo_path, 'remote')[1])
+    if track_upstream:
+        # If we're configured to track upstream but the repo
+        # does not have an upstream remote, add one
+        if not has_upstream_remote:
+            git_command(
+                repo_path,
+                "remote add upstream %(upstream)s" % git_opts)
 
-    # If we're configured to track upstream, make sure that
-    # the upstream URL matches the config
+        # If we're configured to track upstream, make sure that
+        # the upstream URL matches the config
+        else:
+            git_command(
+                repo_path,
+                "remote set-url upstream %(upstream)s" % git_opts)
+
+        # Now that we have any upstreams configured, fetch all of the refs
+        # we might need, pruning remote branches that no longer exist
+        git_command(
+            repo_path, "remote update --prune", env=ssh_env)
     else:
-        git_command(
-            repo_path,
-            "remote set-url upstream %(upstream)s" % git_opts)
-
-    # Now that we have any upstreams configured, fetch all of the refs
-    # we might need, pruning remote branches that no longer exist
-    git_command(
-        repo_path, "remote update --prune", env=ssh_env)
+        # If we are not tracking upstream, then we do not need
+        # an upstream remote configured
+        if has_upstream_remote:
+            git_command(repo_path, "remote rm upstream")
 
     # TODO(mordred): This is here so that later we can
     # inspect the master branch for meta-info
