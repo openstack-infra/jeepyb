@@ -58,7 +58,7 @@ def is_newbie(uploader):
     cursor.execute(query, searchkey)
     data = cursor.fetchone()
     if data:
-        if data[0] == "1":
+        if data[0] == 1:
             logger.info('We found a newbie: %s', uploader)
             return True
         else:
