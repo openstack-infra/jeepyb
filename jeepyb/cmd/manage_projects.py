@@ -128,8 +128,19 @@ def write_acl_config(project, acl_dir, acl_base, acl_append, parameters):
 
 
 def fetch_config(project, remote_url, repo_path, env={}):
-    status = git_command(repo_path, "fetch %s +refs/meta/config:"
-                         "refs/remotes/gerrit-meta/config" % remote_url, env)
+    # Poll for refs/meta/config as gerrit may not have written it out for
+    # us yet.
+    for x in range(10):
+        status = git_command(repo_path, "fetch %s +refs/meta/config:"
+                             "refs/remotes/gerrit-meta/config" %
+                             remote_url, env)
+        if status == 0:
+            break
+        else:
+            log.debug("Failed to fetch refs/meta/config for project: %s" %
+                      project)
+            time.sleep(2)
+
     if status != 0:
         log.error("Failed to fetch refs/meta/config for project: %s" % project)
         return False
