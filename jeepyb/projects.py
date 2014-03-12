@@ -27,8 +27,7 @@ Expected review.projects.yaml format:
 import jeepyb.utils as u
 
 
-registry = u.ProjectsYamlRegistry('/home/gerrit2/projects.yaml',
-                                  'PROJECTS_YAML')
+registry = u.ProjectsRegistry()
 
 
 def project_to_group(project_full_name):

@@ -22,15 +22,13 @@
 
 import os
 import subprocess
-import yaml
+
+import jeepyb.utils as u
 
 
-PROJECTS_YAML = os.environ.get('PROJECTS_YAML',
-                               '/home/cgit/projects.yaml')
-CGIT_REPOS = os.environ.get('CGIT_REPOS',
-                            '/etc/cgitrepos')
-REPO_PATH = os.environ.get('REPO_PATH',
-                           '/var/lib/git')
+PROJECTS_YAML = os.environ.get('PROJECTS_YAML', '/home/cgit/projects.yaml')
+CGIT_REPOS = os.environ.get('CGIT_REPOS', '/etc/cgitrepos')
+REPO_PATH = os.environ.get('REPO_PATH', '/var/lib/git')
 SCRATCH_SUBPATH = os.environ.get('SCRATCH_SUBPATH')
 SCRATCH_OWNER = os.environ.get('SCRATCH_OWNER', 'scratch')
 SCRATCH_GROUP = os.environ.get('SCRATCH_GROUP', 'scratch')
@@ -39,11 +37,10 @@ CGIT_GROUP = os.environ.get('CGIT_GROUP', 'cgit')
 
 
 def main():
-    yaml_docs = [config for config in yaml.safe_load_all(open(PROJECTS_YAML))]
-    config = yaml_docs[-1]
+    registry = u.ProjectsRegistry(PROJECTS_YAML)
     gitorgs = {}
     names = set()
-    for entry in config:
+    for entry in registry.configs_list:
         project = entry['project']
         (org, name) = project.split('/')
         description = entry.get('description', name)
