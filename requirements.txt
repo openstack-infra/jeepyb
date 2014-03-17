@@ -9,3 +9,4 @@ pyyaml
 pkginfo
 PyRSS2Gen
 python-swiftclient
+six>=1.4.1
