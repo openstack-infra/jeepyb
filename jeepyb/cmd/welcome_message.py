@@ -17,11 +17,11 @@
 # message welcoming them to the community and explaining the review process
 #
 # For example, this might be called as follows
-# python welcome_message.py -change Ia1fea1eab3976f1a9cb89ceb3ce1c6c6a7e79c42
+# python welcome_message.py --change Ia1fea1eab3976f1a9cb89ceb3ce1c6c6a7e79c42
 # --change-url \ https://review-dev.openstack.org/81 --project gtest-org/test \
 # --branch master --uploader User A. Example (user@example.com) --commit \
-# 05508ae633852469d2fd7786a3d6f1d06f87055b --patchset 1 patchset-merged user \
-# ~/.ssh/id_rsa
+# 05508ae633852469d2fd7786a3d6f1d06f87055b --patchset 1 patchset-merged \
+# --ssh-user=user --ssh-key=/home/user/.ssh/id_rsa
 # and if this was the first commit from "user@example.com", a message
 # would be posted on review 81.
 
@@ -65,8 +65,8 @@ def is_newbie(uploader):
             return False
 
 
-def post_message(change_id, gerrit_user, gerrit_ssh_key):
-    """Post a welcome message on the patch set specified by the change_id."""
+def post_message(commit, gerrit_user, gerrit_ssh_key):
+    """Post a welcome message on the patch set specified by the commit."""
 
     welcome_text = """Thank you for your first contribution to OpenStack.
 
@@ -91,27 +91,24 @@ def post_message(change_id, gerrit_user, gerrit_ssh_key):
     IRC: https://wiki.openstack.org/wiki/IRC
     Workflow: https://wiki.openstack.org/wiki/Gerrit_Workflow
     """
-    # get the patch_id
-    query = """SELECT change_id FROM patch_sets WHERE change_id = %s;"""
-
-    cursor = jeepyb.gerritdb.connect().cursor()
-    cursor.execute(query, change_id)
-    data = cursor.fetchone()
-    if data[0]:
-        # post the above message, using ssh.
-        command = ('gerrit review '
-                   '--message="{message}" {patch_id}').format(
-                       message=welcome_text,
-                       patch_id=data)
-        logger.info('Welcoming: %s', data[0])
-        ssh = paramiko.SSHClient()
-        ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-        ssh.connect('localhost', username=gerrit_user,
-                    key_filename=gerrit_ssh_key, port=29418)
-        stdin, stdout, stderr = ssh.exec_command(command)
-
-    else:
-        logger.info('Unable to find patch_id for change_id=%s', change_id)
+    # post the above message, using ssh.
+    command = ('gerrit review '
+               '--message="{message}" {commit}').format(
+                   message=welcome_text,
+                   commit=commit)
+    logger.info('Welcoming: %s', commit)
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    ssh.connect('localhost', username=gerrit_user,
+                key_filename=gerrit_ssh_key, port=29418)
+    stdin, stdout, stderr = ssh.exec_command(command)
+    stdout_text = stdout.read()
+    stderr_text = stderr.read()
+    ssh.close()
+    if stdout_text:
+        logger.debug('stdout: %s' % stdout_text)
+    if stderr_text:
+        logger.error('stderr: %s' % stderr_text)
 
 
 def main():
@@ -131,8 +128,10 @@ def main():
     parser.add_argument('--patchset', default=None)
     parser.add_argument('--is-draft', default=None)
     # for Welcome Message
-    parser.add_argument('user', help='The gerrit admin user')
-    parser.add_argument('ssh_key', help='The gerrit admin SSH key file')
+    parser.add_argument('--ssh-user', dest='ssh_user',
+                        help='The gerrit welcome message user')
+    parser.add_argument('--ssh-key', dest='ssh_key',
+                        help='The gerrit welcome message SSH key file')
     # Don't actually post the message
     parser.add_argument('--dryrun', dest='dryrun', action='store_true')
     parser.add_argument('--no-dryrun', dest='dryrun', action='store_false')
@@ -148,8 +147,8 @@ def main():
         logging.basicConfig(level=logging.ERROR)
 
     # they're a first-timer, post the message on 1st patchset
-    if is_newbie(args.uploader) and args.patchset == 1 and not args.dryrun:
-        post_message(args.change, args.user, args.ssh_key)
+    if is_newbie(args.uploader) and args.patchset == '1' and not args.dryrun:
+        post_message(args.commit, args.ssh_user, args.ssh_key)
 
 if __name__ == "__main__":
     main()
