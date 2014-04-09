@@ -537,7 +537,7 @@ def main():
     else:
         logging.basicConfig(level=logging.ERROR)
 
-    default_has_github = registry.get('has-github', True)
+    default_has_github = registry.get_defaults('has-github', True)
 
     LOCAL_GIT_DIR = registry.get_defaults('local-git-dir', '/var/lib/git')
     JEEPYB_CACHE_DIR = registry.get_defaults('jeepyb-cache-dir',
