@@ -27,10 +27,10 @@ logger.setLevel(logging.INFO)
 
 
 def expire_patch_set(ssh, patch_id, patch_subject):
-    message = ('code review expired after 1 week of no activity'
-               ' after a negative review, it can be restored using'
+    message = ('Code review expired after 1 week of no activity'
+               ' after a negative review. It can be restored using'
                ' the \`Restore Change\` button under the Patch Set'
-               ' on the web interface')
+               ' on the web interface.')
     command = ('gerrit review --abandon '
                '--message="{message}" {patch_id}').format(
                    message=message,
