@@ -22,7 +22,7 @@
 #     --change-url https://review.openstack.org/55607 --project nova/ \
 #     --branch master --commit c262de4417d48be599c3a7496ef94de5c84b188c \
 #     --impact DocImpact --dest-address none@localhost --dryrun \
-#     --ignore-duplicates --config foo.yaml \
+#     --config foo.yaml \
 #     change-merged
 #
 # But you'll need a git repository at /home/gerrit2/review_site/git/nova.git
@@ -102,7 +102,7 @@ def create_bug(git_log, args, config):
     Create a launchpad bug in a LP project, titled with the first line of
     the git commit message, with the content of the git_log prepended
     with the Gerrit review URL. Tag the bug with the name of the repository
-    it came from. Don't create a duplicate bug. Returns link to the bug.
+    it came from. Returns link to the bug.
     """
 
     # Determine what LP project to use
@@ -136,28 +136,24 @@ def create_bug(git_log, args, config):
     bug_descr = args.change_url + prelude + '\n' + git_log
     project = lpconn.projects[lp_project]
 
-    # check for existing bugs by searching for the title, to avoid
-    # creating multiple bugs per review
     buglink = None
     author_class = None
-    potential_dupes = project.searchTasks(search_text=bug_title)
 
-    if len(potential_dupes) == 0 or args.ignore_duplicates:
-        buginfo, buglink = actions.create(project, bug_title, bug_descr, args)
+    buginfo, buglink = actions.create(project, bug_title, bug_descr, args)
 
-        # If the author of the merging patch matches our configured
-        # subscriber lists, then subscribe the configured victims.
-        for email_address in config.get('author_map', {}):
-            email_re = re.compile('^Author:.*%s.*' % email_address)
-            for line in bug_descr.split('\n'):
-                m = email_re.match(line)
-                if m:
-                    author_class = config['author_map'][email_address]
+    # If the author of the merging patch matches our configured
+    # subscriber lists, then subscribe the configured victims.
+    for email_address in config.get('author_map', {}):
+        email_re = re.compile('^Author:.*%s.*' % email_address)
+        for line in bug_descr.split('\n'):
+            m = email_re.match(line)
+            if m:
+                author_class = config['author_map'][email_address]
 
-        if author_class:
-            config = config.get('subscriber_map', {}).get(author_class, [])
-            for subscriber in config:
-                actions.subscribe(buginfo, subscriber)
+    if author_class:
+        config = config.get('subscriber_map', {}).get(author_class, [])
+        for subscriber in config:
+            actions.subscribe(buginfo, subscriber)
 
     return buglink
 
@@ -237,13 +233,6 @@ def main():
     parser.add_argument('--dryrun', dest='dryrun', action='store_true')
     parser.add_argument('--no-dryrun', dest='dryrun', action='store_false')
     parser.set_defaults(dryrun=False)
-
-    # Ignore duplicates, useful for testing
-    parser.add_argument('--ignore-duplicates', dest='ignore_duplicates',
-                        action='store_true')
-    parser.add_argument('--no-ignore-duplicates', dest='ignore_duplicates',
-                        action='store_false')
-    parser.set_defaults(ignore_duplicates=False)
 
     args = parser.parse_args()
 
