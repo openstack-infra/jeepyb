@@ -47,9 +47,11 @@ def connect():
         gerrit_config = get_broken_config(GERRIT_CONFIG)
         secure_config = get_broken_config(GERRIT_SECURE_CONFIG)
 
+        DB_HOST = gerrit_config.get("database", "hostname")
         DB_USER = gerrit_config.get("database", "username")
         DB_PASS = secure_config.get("database", "password")
         DB_DB = gerrit_config.get("database", "database")
 
-        db_connection = MySQLdb.connect(user=DB_USER, passwd=DB_PASS, db=DB_DB)
+        db_connection = MySQLdb.connect(
+            host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_DB)
     return db_connection
