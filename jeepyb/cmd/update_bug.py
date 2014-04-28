@@ -46,6 +46,19 @@ def fix_or_related_fix(related):
         return "Fix"
 
 
+def add_change_abandoned_message(bugtask, change_url, project,
+                                 branch, abandoner, reason):
+    subject = ('Change abandoned on %s (%s)'
+               % (u.short_project_name(project), branch))
+    body = ('Change abandoned by %s on branch: %s\nReview: %s'
+            % (abandoner, branch, change_url))
+
+    if reason:
+        body += ('\nReason: %s' % (reason))
+
+    bugtask.bug.newMessage(subject=subject, content=body)
+
+
 def add_change_proposed_message(bugtask, change_url, project, branch,
                                 related=False):
     fix = fix_or_related_fix(related)
@@ -194,6 +207,11 @@ def process_bugtask(launchpad, task, git_log, args):
 
     bugtask = task.lp_task
 
+    if args.hook == "change-abandoned":
+        add_change_abandoned_message(bugtask, args.change_url,
+                                     args.project, args.branch,
+                                     args.abandoner, args.reason)
+
     if args.hook == "change-merged":
         if args.branch == 'master':
             if (p.is_direct_release(args.project) and
@@ -317,6 +335,9 @@ def main():
     parser.add_argument('--branch', default=None)
     parser.add_argument('--commit', default=None)
     parser.add_argument('--topic', default=None)
+    # change-abandoned
+    parser.add_argument('--abandoner', default=None)
+    parser.add_argument('--reason', default=None)
     # change-merged
     parser.add_argument('--submitter', default=None)
     # patchset-created
