@@ -61,6 +61,7 @@ def get_broken_config(filename):
 
 GERRIT_CONFIG = get_broken_config(GERRIT_CONFIG)
 SECURE_CONFIG = get_broken_config(GERRIT_SECURE_CONFIG)
+DB_HOST = GERRIT_CONFIG.get("database", "hostname")
 DB_USER = GERRIT_CONFIG.get("database", "username")
 DB_PASS = SECURE_CONFIG.get("database", "password")
 DB_DB = GERRIT_CONFIG.get("database", "database")
@@ -144,7 +145,8 @@ def main():
         'Gerrit User Sync', uris.LPNET_SERVICE_ROOT, GERRIT_CACHE_DIR,
         credentials_file=GERRIT_CREDENTIALS, version='devel')
 
-    conn = MySQLdb.connect(user=DB_USER, passwd=DB_PASS, db=DB_DB)
+    conn = MySQLdb.connect(
+        host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_DB)
 
     find_specs(lpconn, conn, args)
 
