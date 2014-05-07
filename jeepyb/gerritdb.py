@@ -15,7 +15,6 @@
 # under the License.
 
 import ConfigParser
-import MySQLdb
 import os
 import StringIO
 
@@ -47,11 +46,18 @@ def connect():
         gerrit_config = get_broken_config(GERRIT_CONFIG)
         secure_config = get_broken_config(GERRIT_SECURE_CONFIG)
 
+        DB_TYPE = gerrit_config.get("database", "type")
         DB_HOST = gerrit_config.get("database", "hostname")
         DB_USER = gerrit_config.get("database", "username")
         DB_PASS = secure_config.get("database", "password")
         DB_DB = gerrit_config.get("database", "database")
 
-        db_connection = MySQLdb.connect(
-            host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_DB)
+        if DB_TYPE == "MYSQL":
+            import MySQLdb
+            db_connection = MySQLdb.connect(
+                host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_DB)
+        else:
+            import psycopg2
+            db_connection = psycopg2.connect(
+                host=DB_HOST, user=DB_USER, password=DB_PASS, database=DB_DB)
     return db_connection
