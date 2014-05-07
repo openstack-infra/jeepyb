@@ -289,20 +289,20 @@ def create_github_project(
                                has_issues=has_issues,
                                has_downloads=has_downloads,
                                has_wiki=has_wiki)
+        if description:
+            repo.edit(repo_name, description=description)
+        if homepage:
+            repo.edit(repo_name, homepage=homepage)
+        repo.edit(repo_name, has_issues=has_issues,
+                  has_downloads=has_downloads,
+                  has_wiki=has_wiki)
+
+        if 'gerrit' not in [team.name for team in repo.get_teams()]:
+            teams = org.get_teams()
+            teams_dict = dict(zip([t.name.lower() for t in teams], teams))
+            teams_dict['gerrit'].add_to_repos(repo)
         created = True
-    if description:
-        repo.edit(repo_name, description=description)
-    if homepage:
-        repo.edit(repo_name, homepage=homepage)
 
-    repo.edit(repo_name, has_issues=has_issues,
-              has_downloads=has_downloads,
-              has_wiki=has_wiki)
-
-    if 'gerrit' not in [team.name for team in repo.get_teams()]:
-        teams = org.get_teams()
-        teams_dict = dict(zip([t.name.lower() for t in teams], teams))
-        teams_dict['gerrit'].add_to_repos(repo)
     return created
 
 
