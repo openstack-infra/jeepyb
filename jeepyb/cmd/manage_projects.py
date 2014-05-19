@@ -70,6 +70,18 @@ registry = u.ProjectsRegistry()
 log = logging.getLogger("manage_projects")
 
 
+class FetchConfigException(Exception):
+    pass
+
+
+class CopyACLException(Exception):
+    pass
+
+
+class CreateGroupException(Exception):
+    pass
+
+
 def run_command(cmd, status=False, env={}):
     cmd_list = shlex.split(str(cmd))
     newenv = os.environ
@@ -145,30 +157,28 @@ def fetch_config(project, remote_url, repo_path, env={}):
 
     if status != 0:
         log.error("Failed to fetch refs/meta/config for project: %s" % project)
-        return False
+        raise FetchConfigException()
     # Because the following fails if executed more than once you should only
     # run fetch_config once in each repo.
     status = git_command(repo_path, "checkout -B config "
                          "remotes/gerrit-meta/config")
     if status != 0:
         log.error("Failed to checkout config for project: %s" % project)
-        return False
-
-    return True
+        raise FetchConfigException()
 
 
 def copy_acl_config(project, repo_path, acl_config):
     if not os.path.exists(acl_config):
-        return False
+        raise CopyACLException()
 
     acl_dest = os.path.join(repo_path, "project.config")
     status, _ = run_command("cp %s %s" %
                             (acl_config, acl_dest), status=True)
-    if status == 0:
-        status = git_command(repo_path, "diff --quiet")
-        if status != 0:
-            return True
-    return False
+    if status != 0:
+        raise CopyACLException()
+
+    status = git_command(repo_path, "diff --quiet")
+    return status == 0
 
 
 def push_acl_config(project, remote_url, repo_path, gitid, env={}):
@@ -228,7 +238,7 @@ def create_groups_file(project, gerrit, repo_path):
                 uuids[group] = uuid
             else:
                 log.error("Unable to get UUID for group %s." % group)
-                return False
+                raise CreateGroupException()
     if uuids:
         with open(group_file, 'w') as fp:
             for group, uuid in uuids.items():
@@ -236,8 +246,7 @@ def create_groups_file(project, gerrit, repo_path):
     status = git_command(repo_path, "add groups")
     if status != 0:
         log.error("Failed to add groups file for project: %s" % project)
-        return False
-    return True
+        raise CreateGroupException()
 
 
 def make_ssh_wrapper(gerrit_user, gerrit_key):
@@ -470,18 +479,13 @@ def process_acls(acl_config, project, ACL_DIR, section,
                          section.get('acl-append', []),
                          section.get('acl-parameters', {}))
     try:
-        if (fetch_config(project,
-                         remote_url,
-                         repo_path,
-                         ssh_env) and
-            copy_acl_config(project, repo_path,
-                            acl_config) and
-                create_groups_file(project, gerrit, repo_path)):
-            push_acl_config(project,
-                            remote_url,
-                            repo_path,
-                            GERRIT_GITID,
-                            ssh_env)
+        fetch_config(project, remote_url, repo_path, ssh_env)
+        if not copy_acl_config(project, repo_path, acl_config):
+            # nothing was copied, so we're done
+            return
+        create_groups_file(project, gerrit, repo_path)
+        push_acl_config(project, remote_url, repo_path,
+                        GERRIT_GITID, ssh_env)
     except Exception:
         log.exception(
             "Exception processing ACLS for %s." % project)
