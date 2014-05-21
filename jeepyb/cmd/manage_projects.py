@@ -154,10 +154,30 @@ def fetch_config(project, remote_url, repo_path, env={}):
             log.debug("Failed to fetch refs/meta/config for project: %s" %
                       project)
             time.sleep(2)
-
     if status != 0:
         log.error("Failed to fetch refs/meta/config for project: %s" % project)
         raise FetchConfigException()
+
+    # Poll for project.config as gerrit may not have committed an empty
+    # one yet.
+    output = ""
+    for x in range(10):
+        status = git_command(repo_path, "remote update %s" % remote_url, env)
+        if status != 0:
+            log.error("Failed to update remote: %s" % remote_url)
+            break
+        else:
+            status, output = git_command_output(
+                repo_path, "ls-files --with-tree=remotes/gerrit-meta/config "
+                "project.config", env)
+        if output.strip() != "project.config" or status != 0:
+            log.debug("Failed to find project.config for project: %s" %
+                      project)
+            time.sleep(2)
+    if output.strip() != "project.config" or status != 0:
+        log.error("Failed to find project.config for project: %s" % project)
+        raise FetchConfigException()
+
     # Because the following fails if executed more than once you should only
     # run fetch_config once in each repo.
     status = git_command(repo_path, "checkout -B config "
