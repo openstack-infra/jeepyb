@@ -4,6 +4,7 @@ argparse
 gerritlib>=0.3.0
 MySQL-python
 paramiko
+psycopg2
 PyGithub
 pyyaml
 pkginfo
