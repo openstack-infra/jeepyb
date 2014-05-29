@@ -103,32 +103,6 @@ def git_command_output(repo_dir, sub_cmd, env={}):
     return (status, out)
 
 
-def write_acl_config(project, acl_dir, acl_base, acl_append, parameters):
-    project_parts = os.path.split(project)
-    if len(project_parts) > 1:
-        repo_base = os.path.join(acl_dir, *project_parts[:-1])
-        if not os.path.exists(repo_base):
-            os.makedirs(repo_base)
-        if not os.path.isdir(repo_base):
-            return 1
-        project = project_parts[-1]
-        config_file = os.path.join(repo_base, "%s.config" % project)
-    else:
-        config_file = os.path.join(acl_dir, "%s.config" % project)
-    if 'project' not in parameters:
-        parameters['project'] = project
-    with open(config_file, 'w') as config:
-        if acl_base and os.path.exists(acl_base):
-            config.write(open(acl_base, 'r').read())
-        for acl_snippet in acl_append:
-            if not os.path.exists(acl_snippet):
-                acl_snippet = os.path.join(acl_dir, acl_snippet)
-            if not os.path.exists(acl_snippet):
-                continue
-            with open(acl_snippet, 'r') as append_content:
-                config.write(append_content.read() % parameters)
-
-
 def fetch_config(project, remote_url, repo_path, env={}):
     # Poll for refs/meta/config as gerrit may not have written it out for
     # us yet.
@@ -464,11 +438,7 @@ def sync_upstream(repo_path, project, ssh_env, upstream_prefix):
 def process_acls(acl_config, project, ACL_DIR, section,
                  remote_url, repo_path, ssh_env, gerrit, GERRIT_GITID):
     if not os.path.isfile(acl_config):
-        write_acl_config(project,
-                         ACL_DIR,
-                         section.get('acl-base', None),
-                         section.get('acl-append', []),
-                         section.get('acl-parameters', {}))
+        return
     try:
         if (fetch_config(project,
                          remote_url,
