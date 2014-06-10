@@ -152,7 +152,7 @@ def copy_acl_config(project, repo_path, acl_config):
         raise CopyACLException()
 
     status = git_command(repo_path, "diff --quiet")
-    return status == 0
+    return status != 0
 
 
 def push_acl_config(project, remote_url, repo_path, gitid, env={}):
