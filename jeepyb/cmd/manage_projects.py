@@ -136,7 +136,7 @@ def fetch_config(project, remote_url, repo_path, env={}):
     # one yet.
     output = ""
     for x in range(10):
-        status = git_command(repo_path, "remote update %s" % remote_url, env)
+        status = git_command(repo_path, "remote update --prune", env)
         if status != 0:
             log.error("Failed to update remote: %s" % remote_url)
             break
