@@ -139,7 +139,8 @@ def fetch_config(project, remote_url, repo_path, env={}):
         status = git_command(repo_path, "remote update --prune", env)
         if status != 0:
             log.error("Failed to update remote: %s" % remote_url)
-            break
+            time.sleep(2)
+            continue
         else:
             status, output = git_command_output(
                 repo_path, "ls-files --with-tree=remotes/gerrit-meta/config "
@@ -148,6 +149,8 @@ def fetch_config(project, remote_url, repo_path, env={}):
             log.debug("Failed to find project.config for project: %s" %
                       project)
             time.sleep(2)
+        else:
+            break
     if output.strip() != "project.config" or status != 0:
         log.error("Failed to find project.config for project: %s" % project)
         raise FetchConfigException()
