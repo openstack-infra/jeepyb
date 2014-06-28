@@ -1,4 +1,4 @@
-pbr>=0.5.21,<1.0
+pbr>=0.6,!=0.7,<1.0
 
 argparse
 gerritlib>=0.3.0
@@ -9,4 +9,4 @@ pyyaml
 pkginfo
 PyRSS2Gen
 python-swiftclient
-six>=1.4.1
+six>=1.7.0
