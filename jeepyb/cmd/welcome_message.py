@@ -90,6 +90,7 @@ def post_message(commit, gerrit_user, gerrit_ssh_key):
 
     IRC: https://wiki.openstack.org/wiki/IRC
     Workflow: https://wiki.openstack.org/wiki/Gerrit_Workflow
+    Commit Messages: https://wiki.openstack.org/wiki/GitCommitMessages
     """
     # post the above message, using ssh.
     command = ('gerrit review '
