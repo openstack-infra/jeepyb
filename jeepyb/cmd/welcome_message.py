@@ -65,10 +65,10 @@ def is_newbie(uploader):
             return False
 
 
-def post_message(commit, gerrit_user, gerrit_ssh_key):
+def post_message(commit, gerrit_user, gerrit_ssh_key, message_file):
     """Post a welcome message on the patch set specified by the commit."""
 
-    welcome_text = """Thank you for your first contribution to OpenStack.
+    default_text = """Thank you for your first contribution to OpenStack.
 
     Your patch will now be tested automatically by OpenStack testing frameworks
     and once the automatic tests pass, it will be reviewed by other friendly
@@ -91,6 +91,17 @@ def post_message(commit, gerrit_user, gerrit_ssh_key):
     IRC: https://wiki.openstack.org/wiki/IRC
     Workflow: https://wiki.openstack.org/wiki/Gerrit_Workflow
     """
+
+    if message_file:
+        try:
+            with open(message_file, 'r') as _file:
+                welcome_text = _file.read()
+        except (OSError, IOError):
+            logger.exception("Could not open message file")
+            welcome_text = default_text
+    else:
+        welcome_text = default_text
+
     # post the above message, using ssh.
     command = ('gerrit review '
                '--message="{message}" {commit}').format(
@@ -132,6 +143,8 @@ def main():
                         help='The gerrit welcome message user')
     parser.add_argument('--ssh-key', dest='ssh_key',
                         help='The gerrit welcome message SSH key file')
+    parser.add_argument('--message-file', dest='message_file', default=None,
+                        help='The gerrit welcome message')
     # Don't actually post the message
     parser.add_argument('--dryrun', dest='dryrun', action='store_true')
     parser.add_argument('--no-dryrun', dest='dryrun', action='store_false')
@@ -148,7 +161,8 @@ def main():
 
     # they're a first-timer, post the message on 1st patchset
     if is_newbie(args.uploader) and args.patchset == '1' and not args.dryrun:
-        post_message(args.commit, args.ssh_user, args.ssh_key)
+        post_message(args.commit, args.ssh_user, args.ssh_key,
+                     args.message_file)
 
 if __name__ == "__main__":
     main()
