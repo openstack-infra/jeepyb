@@ -579,6 +579,10 @@ def main():
                 track_upstream = 'track-upstream' in options
                 repo_path = os.path.join(JEEPYB_CACHE_DIR, project)
 
+                # If this project doesn't want to use gerrit, exit cleanly.
+                if 'no-gerrit' in options:
+                    continue
+
                 project_git = "%s.git" % project
                 remote_url = "ssh://localhost:%s/%s" % (GERRIT_PORT, project)
                 git_opts = dict(upstream=upstream,
