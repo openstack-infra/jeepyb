@@ -156,9 +156,11 @@ def main():
     args = parser.parse_args()
 
     if args.verbose:
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG,
+                            format='%(asctime)-6s: %(name)s - %(levelname)s')
     else:
-        logging.basicConfig(level=logging.ERROR)
+        logging.basicConfig(level=logging.ERROR,
+                            format='%(asctime)-6s: %(name)s - %(levelname)s')
 
     # they're a first-timer, post the message on 1st patchset
     if is_newbie(args.uploader) and args.patchset == '1' and not args.dryrun:

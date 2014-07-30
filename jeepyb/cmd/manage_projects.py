@@ -528,11 +528,14 @@ def main():
     args = parser.parse_args()
 
     if args.debug:
-        logging.basicConfig(level=logging.DEBUG)
+        logging.basicConfig(level=logging.DEBUG,
+                            format='%(asctime)-6s: %(name)s - %(levelname)s')
     elif args.verbose:
-        logging.basicConfig(level=logging.INFO)
+        logging.basicConfig(level=logging.INFO,
+                            format='%(asctime)-6s: %(name)s - %(levelname)s')
     else:
-        logging.basicConfig(level=logging.ERROR)
+        logging.basicConfig(level=logging.ERROR,
+                            format='%(asctime)-6s: %(name)s - %(levelname)s')
 
     default_has_github = registry.get_defaults('has-github', True)
 
