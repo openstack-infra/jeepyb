@@ -529,13 +529,16 @@ def main():
 
     if args.debug:
         logging.basicConfig(level=logging.DEBUG,
-                            format='%(asctime)-6s: %(name)s - %(levelname)s')
+                            format='%(asctime)-6s: %(name)s - %(levelname)s'
+                                   ' - %(message)s')
     elif args.verbose:
         logging.basicConfig(level=logging.INFO,
-                            format='%(asctime)-6s: %(name)s - %(levelname)s')
+                            format='%(asctime)-6s: %(name)s - %(levelname)s'
+                                   ' - %(message)s')
     else:
         logging.basicConfig(level=logging.ERROR,
-                            format='%(asctime)-6s: %(name)s - %(levelname)s')
+                            format='%(asctime)-6s: %(name)s - %(levelname)s'
+                                   ' - %(message)s')
 
     default_has_github = registry.get_defaults('has-github', True)
 

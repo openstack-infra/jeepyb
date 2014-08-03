@@ -57,7 +57,8 @@ instructions there to upload your change to Gerrit.
 def main():
 
     logging.basicConfig(level=logging.ERROR,
-                        format='%(asctime)-6s: %(name)s - %(levelname)s')
+                        format='%(asctime)-6s: %(name)s - %(levelname)s'
+                               ' - %(message)s')
 
     GITHUB_SECURE_CONFIG = os.environ.get('GITHUB_SECURE_CONFIG',
                                           '/etc/github/github.secure.config')

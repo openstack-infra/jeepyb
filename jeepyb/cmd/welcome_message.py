@@ -157,10 +157,12 @@ def main():
 
     if args.verbose:
         logging.basicConfig(level=logging.DEBUG,
-                            format='%(asctime)-6s: %(name)s - %(levelname)s')
+                            format='%(asctime)-6s: %(name)s - %(levelname)s'
+                                   ' - %(message)s')
     else:
         logging.basicConfig(level=logging.ERROR,
-                            format='%(asctime)-6s: %(name)s - %(levelname)s')
+                            format='%(asctime)-6s: %(name)s - %(levelname)s'
+                                   ' - %(message)s')
 
     # they're a first-timer, post the message on 1st patchset
     if is_newbie(args.uploader) and args.patchset == '1' and not args.dryrun:
