@@ -290,7 +290,7 @@ def find_bugs(launchpad, git_log, args):
     if p.is_no_launchpad_bugs(project):
         return []
 
-    project = p.project_to_group(project)
+    projects = p.project_to_groups(project)
 
     part1 = r'^[\t ]*(?P<prefix>[-\w]+)?[\s:]*'
     part2 = r'(?:\b(?:bug|lp)\b[\s#:]*)+'
@@ -307,7 +307,7 @@ def find_bugs(launchpad, git_log, args):
             try:
                 lp_bug = launchpad.bugs[bug_num]
                 for lp_task in lp_bug.bug_tasks:
-                    if lp_task.bug_target_name == project:
+                    if lp_task.bug_target_name in projects:
                         bugtasks[bug_num] = Task(lp_task, prefix)
                         break
             except KeyError:
