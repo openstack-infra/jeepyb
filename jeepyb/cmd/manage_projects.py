@@ -82,7 +82,8 @@ class CreateGroupException(Exception):
     pass
 
 
-def run_command(cmd, status=False, env={}):
+def run_command(cmd, status=False, env=None):
+    env = env or {}
     cmd_list = shlex.split(str(cmd))
     newenv = os.environ
     newenv.update(env)
@@ -97,25 +98,29 @@ def run_command(cmd, status=False, env={}):
     return out.strip()
 
 
-def run_command_status(cmd, env={}):
+def run_command_status(cmd, env=None):
+    env = env or {}
     return run_command(cmd, True, env)
 
 
-def git_command(repo_dir, sub_cmd, env={}):
+def git_command(repo_dir, sub_cmd, env=None):
+    env = env or {}
     git_dir = os.path.join(repo_dir, '.git')
     cmd = "git --git-dir=%s --work-tree=%s %s" % (git_dir, repo_dir, sub_cmd)
     status, _ = run_command(cmd, True, env)
     return status
 
 
-def git_command_output(repo_dir, sub_cmd, env={}):
+def git_command_output(repo_dir, sub_cmd, env=None):
+    env = env or {}
     git_dir = os.path.join(repo_dir, '.git')
     cmd = "git --git-dir=%s --work-tree=%s %s" % (git_dir, repo_dir, sub_cmd)
     status, out = run_command(cmd, True, env)
     return (status, out)
 
 
-def fetch_config(project, remote_url, repo_path, env={}):
+def fetch_config(project, remote_url, repo_path, env=None):
+    env = env or {}
     # Poll for refs/meta/config as gerrit may not have written it out for
     # us yet.
     for x in range(10):
@@ -178,7 +183,8 @@ def copy_acl_config(project, repo_path, acl_config):
     return status != 0
 
 
-def push_acl_config(project, remote_url, repo_path, gitid, env={}):
+def push_acl_config(project, remote_url, repo_path, gitid, env=None):
+    env = env or {}
     cmd = "commit -a -m'Update project config.' --author='%s'" % gitid
     status = git_command(repo_path, cmd)
     if status != 0:
