@@ -84,11 +84,18 @@ def main():
 
         # Find the project's repo
         project_split = project.split('/', 1)
-        if len(project_split) > 1:
-            org = orgs_dict[project_split[0].lower()]
-            repo = org.get_repo(project_split[1])
-        else:
-            repo = ghub.get_user().get_repo(project)
+
+        # Handle errors in case the repo or the organization doesn't exists
+        try:
+            if len(project_split) > 1:
+                org = orgs_dict[project_split[0].lower()]
+                repo = org.get_repo(project_split[1])
+            else:
+                repo = ghub.get_user().get_repo(project)
+        except KeyError:
+            continue
+        except github.GithubException:
+            continue
 
         # Close each pull request
         pull_requests = repo.get_pulls("open")
