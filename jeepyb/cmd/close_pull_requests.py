@@ -38,6 +38,7 @@
 # [github]
 # oauth_token = GITHUB_OAUTH_TOKEN
 
+import argparse
 import ConfigParser
 import github
 import logging
@@ -63,6 +64,22 @@ def main():
     logging.basicConfig(level=logging.ERROR,
                         format='%(asctime)-6s: %(name)s - %(levelname)s'
                                ' - %(message)s')
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--message-file', dest='message_file', default=None,
+                        help='The close pull request message')
+
+    args = parser.parse_args()
+
+    if args.message_file:
+        try:
+            with open(args.message_file, 'r') as _file:
+                pull_request_text = _file.read()
+        except (OSError, IOError):
+            log.exception("Could not open close pull request message file")
+            raise
+    else:
+        pull_request_text = MESSAGE
 
     GITHUB_SECURE_CONFIG = os.environ.get('GITHUB_SECURE_CONFIG',
                                           '/etc/github/github.secure.config')
@@ -113,7 +130,7 @@ def main():
                                        headers={},
                                        attributes=issue_data,
                                        completed=True)
-            issue.create_comment(MESSAGE % vars)
+            issue.create_comment(pull_request_text % vars)
             req.edit(state="closed")
 
 if __name__ == "__main__":
