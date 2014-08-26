@@ -568,7 +568,7 @@ def main():
         'github-config',
         '/etc/github/github-projects.secure.config')
 
-    gerrit = gerritlib.gerrit.Gerrit('localhost',
+    gerrit = gerritlib.gerrit.Gerrit(GERRIT_HOST,
                                      GERRIT_USER,
                                      GERRIT_PORT,
                                      GERRIT_KEY)
@@ -596,7 +596,10 @@ def main():
                     continue
 
                 project_git = "%s.git" % project
-                remote_url = "ssh://localhost:%s/%s" % (GERRIT_PORT, project)
+                remote_url = "ssh://%s:%s/%s" % (
+                    GERRIT_HOST,
+                    GERRIT_PORT,
+                    project)
                 git_opts = dict(upstream=upstream,
                                 repo_path=repo_path,
                                 remote_url=remote_url)
