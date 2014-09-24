@@ -68,11 +68,18 @@ DB_DB = GERRIT_CONFIG.get("database", "database")
 
 
 def update_spec(launchpad, project, name, subject, link, topic=None):
+    spec = None
+
     if p.is_no_launchpad_blueprints(project):
         return
 
-    project = p.project_to_group(project)
-    spec = launchpad.projects[project].getSpecification(name=name)
+    projects = p.project_to_groups(project)
+
+    for project in projects:
+        spec = launchpad.projects[project].getSpecification(name=name)
+        if spec:
+            break
+
     if not spec:
         return
 

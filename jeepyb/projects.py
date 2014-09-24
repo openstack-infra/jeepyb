@@ -18,6 +18,8 @@ Expected review.projects.yaml format:
 - project: some/project
   launchpad: awesomeproject
   description: Best project ever.
+  groups:
+    - awesome-group
   options:
     - direct-release
     - no-launchpad-bugs
@@ -30,10 +32,12 @@ import jeepyb.utils as u
 registry = u.ProjectsRegistry()
 
 
-def project_to_group(project_full_name):
-    return registry[project_full_name].get(
-        'group', registry[project_full_name].get(
-            'launchpad', u.short_project_name(project_full_name)))
+def project_to_groups(project_full_name):
+    return registry[project_full_name] \
+        .get('groups',
+             [registry[project_full_name].get('group',
+                                              u.short_project_name(
+                                                  project_full_name))])
 
 
 def _is_no_launchpad(project_full_name, obj_type):
