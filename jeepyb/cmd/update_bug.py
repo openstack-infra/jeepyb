@@ -221,7 +221,7 @@ def process_bugtask(launchpad, task, git_log, args):
                 if (bugtask.status != u'Fix Released' and
                         task.needs_change('set_fix_committed')):
                     set_fix_committed(bugtask)
-        elif args.branch == 'milestone-proposed':
+        elif args.branch.startswith('proposed/'):
             release_fixcommitted(bugtask)
         elif args.branch.startswith('stable/'):
             series = args.branch[7:]
