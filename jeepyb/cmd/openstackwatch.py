@@ -90,7 +90,7 @@ def debug(msg):
         print(msg)
 
 
-def get_javascript(project=None):
+def get_json(project=None):
     url = CONFIG['json_url']
     if project:
         url += "+project:" + project
@@ -99,8 +99,8 @@ def get_javascript(project=None):
     return ret
 
 
-def parse_javascript(javascript):
-    for row in javascript.splitlines():
+def parse_json(content):
+    for row in content.splitlines():
         try:
             json_row = json.loads(row)
         except(ValueError):
@@ -134,7 +134,7 @@ def upload_rss(xml, output_object):
                       cStringIO.StringIO(xml))
 
 
-def generate_rss(javascript, project=""):
+def generate_rss(content, project=""):
     title = "OpenStack %s watch RSS feed" % (project)
     rss = PyRSS2Gen.RSS2(
         title=title,
@@ -143,7 +143,7 @@ def generate_rss(javascript, project=""):
                     "from Gerrit.",
         lastBuildDate=datetime.datetime.now()
     )
-    for row in parse_javascript(javascript):
+    for row in parse_json(content):
         author = row['owner']['name']
         author += " <%s>" % ('email' in row['owner'] and
                              row['owner']['email']
@@ -164,12 +164,12 @@ def generate_rss(javascript, project=""):
 
 def main():
     if CONFIG['output_mode'] == "combined":
-        upload_rss(generate_rss(get_javascript()),
+        upload_rss(generate_rss(get_json()),
                    CONFIG['swift']['combined_output_object'])
     elif CONFIG['output_mode'] == "multiple":
         for project in CONFIG['projects']:
             upload_rss(
-                generate_rss(get_javascript(project), project=project),
+                generate_rss(get_json(project), project=project),
                 "%s.xml" % (os.path.basename(project)))
 
 if __name__ == '__main__':
