@@ -60,4 +60,11 @@ def connect():
             import psycopg2
             db_connection = psycopg2.connect(
                 host=DB_HOST, user=DB_USER, password=DB_PASS, database=DB_DB)
+    else:
+        try:
+            # Make sure the database is responding and reconnect if not
+            db_connection.ping(True)
+        except AttributeError:
+            # This database driver lacks a ping implementation
+            pass
     return db_connection
