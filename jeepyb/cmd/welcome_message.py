@@ -89,7 +89,7 @@ def post_message(commit, gerrit_user, gerrit_ssh_key, message_file):
     Thanks again for supporting OpenStack, we look forward to working with you.
 
     IRC: https://wiki.openstack.org/wiki/IRC
-    Workflow: https://wiki.openstack.org/wiki/Gerrit_Workflow
+    Workflow: http://docs.openstack.org/infra/manual/developers.html
     Commit Messages: https://wiki.openstack.org/wiki/GitCommitMessages
     """
 

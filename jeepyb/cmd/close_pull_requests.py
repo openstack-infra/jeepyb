@@ -49,8 +49,9 @@ MESSAGE = """Thank you for contributing to %(project)s!
 
 %(project)s uses Gerrit for code review.
 
-Please visit http://wiki.openstack.org/GerritWorkflow and follow the
-instructions there to upload your change to Gerrit.
+Please visit
+http://docs.openstack.org/infra/manual/developers.html#development-workflow
+and follow the instructions there to upload your change to Gerrit.
 """
 
 
