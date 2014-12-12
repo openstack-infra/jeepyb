@@ -395,6 +395,10 @@ project=%s
 
 
 def update_local_copy(repo_path, track_upstream, git_opts, ssh_env):
+    # first do a clean of the branch to prevent possible
+    # problems due to previous runs
+    git_command(repo_path, "clean -fdx")
+
     has_upstream_remote = (
         'upstream' in git_command_output(repo_path, 'remote')[1])
     if track_upstream:
