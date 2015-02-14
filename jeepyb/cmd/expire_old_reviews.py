@@ -15,7 +15,7 @@
 
 # This script is designed to expire old code reviews that have not been touched
 # using the following rules:
-# 1. if negative comment and no activity in 1 week, expire
+# 1. if negative comment and no recent activity, expire
 
 import argparse
 import json
@@ -27,7 +27,7 @@ logger.setLevel(logging.INFO)
 
 
 def expire_patch_set(ssh, patch_id, patch_subject):
-    message = ('Code review expired after 1 week of no activity'
+    message = ('Code review expired due to no recent activity'
                ' after a negative review. It can be restored using'
                ' the \`Restore Change\` button under the Patch Set'
                ' on the web interface.')
@@ -47,10 +47,13 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('user', help='The gerrit admin user')
     parser.add_argument('ssh_key', help='The gerrit admin SSH key file')
+    parser.add_argument('--age', dest='age', default='1w',
+                        help='The minimum age of a review to expire')
     options = parser.parse_args()
 
     GERRIT_USER = options.user
     GERRIT_SSH_KEY = options.ssh_key
+    EXPIRY_AGE = options.age
 
     logging.basicConfig(format='%(asctime)-6s: %(name)s - %(levelname)s'
                                ' - %(message)s',
@@ -68,7 +71,7 @@ def main():
     logger.info('Searching no activity on negative review for 1 week')
     stdin, stdout, stderr = ssh.exec_command(
         'gerrit query --current-patch-set --all-approvals'
-        ' --format JSON status:reviewed age:1w')
+        ' --format JSON status:reviewed age:' + EXPIRY_AGE)
 
     for line in stdout:
         row = json.loads(line)
