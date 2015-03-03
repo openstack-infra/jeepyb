@@ -34,7 +34,7 @@ import time
 import PyRSS2Gen
 import six.moves.urllib.request as urlrequest
 
-PROJECTS = ['openstack/nova', 'openstack/keystone', 'opensack/swift']
+PROJECTS = ['openstack/nova', 'openstack/keystone', 'openstack/swift']
 JSON_URL = 'https://review.openstack.org/query'
 DEBUG = False
 OUTPUT_MODE = 'multiple'
