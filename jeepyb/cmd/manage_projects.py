@@ -23,6 +23,7 @@
 # local-git-dir=/var/lib/git
 # gerrit-key=/home/gerrit2/review_site/etc/ssh_host_rsa_key
 # gerrit-committer=Project Creator <openstack-infra@lists.openstack.org>
+# gerrit-replicate=True
 # has-github=True
 # has-wiki=False
 # has-issues=False
@@ -561,6 +562,7 @@ def main():
     GERRIT_USER = registry.get_defaults('gerrit-user')
     GERRIT_KEY = registry.get_defaults('gerrit-key')
     GERRIT_GITID = registry.get_defaults('gerrit-committer')
+    GERRIT_REPLICATE = registry.get_defaults('gerrit-replicate', True)
     GERRIT_SYSTEM_USER = registry.get_defaults('gerrit-system-user', 'gerrit2')
     GERRIT_SYSTEM_GROUP = registry.get_defaults('gerrit-system-group',
                                                 'gerrit2')
@@ -642,7 +644,8 @@ def main():
                 if project_created:
                     push_to_gerrit(
                         repo_path, project, push_string, remote_url, ssh_env)
-                    gerrit.replicate(project)
+                    if GERRIT_REPLICATE:
+                        gerrit.replicate(project)
 
                 # If we're configured to track upstream, make sure we have
                 # upstream's refs, and then push them to the appropriate
@@ -660,7 +663,7 @@ def main():
                         DEFAULT_HAS_ISSUES, DEFAULT_HAS_DOWNLOADS,
                         DEFAULT_HAS_WIKI, GITHUB_SECURE_CONFIG,
                         options, project, description, homepage)
-                    if created:
+                    if created and GERRIT_REPLICATE:
                         gerrit.replicate(project)
 
             except Exception:
