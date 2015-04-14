@@ -211,6 +211,7 @@ def main():
     parser.add_argument('--branch', default=None)
     parser.add_argument('--commit', default=None)
     parser.add_argument('--topic', default=None)
+    parser.add_argument('--change-owner', default=None)
 
     # change-merged
     parser.add_argument('--submitter', default=None)
@@ -219,6 +220,7 @@ def main():
     parser.add_argument('--uploader', default=None)
     parser.add_argument('--patchset', default=None)
     parser.add_argument('--is-draft', default=None)
+    parser.add_argument('--kind', default=None)
 
     # Not passed by gerrit:
     parser.add_argument('--impact', default=None)
