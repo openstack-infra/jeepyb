@@ -43,6 +43,7 @@ import github
 import logging
 import os
 
+import jeepyb.projects as p
 import jeepyb.utils as u
 
 MESSAGE = """Thank you for contributing to %(project)s!
@@ -53,6 +54,8 @@ Please visit
 http://docs.openstack.org/infra/manual/developers.html#development-workflow
 and follow the instructions there to upload your change to Gerrit.
 """
+
+log = logging.getLogger("close_pull_requests")
 
 
 def main():
@@ -79,6 +82,10 @@ def main():
     for section in registry.configs_list:
         project = section['project']
 
+        # Make sure we're using GitHub for this project:
+        if not p.has_github(project):
+            continue
+
         # Make sure we're supposed to close pull requests for this project:
         if 'options' in section and 'has-pull-requests' in section['options']:
             continue
@@ -93,9 +100,8 @@ def main():
                 repo = org.get_repo(project_split[1])
             else:
                 repo = ghub.get_user().get_repo(project)
-        except KeyError:
-            continue
-        except github.GithubException:
+        except (KeyError, github.GithubException):
+            log.exception("Could not find project %s on GitHub." % project)
             continue
 
         # Close each pull request
