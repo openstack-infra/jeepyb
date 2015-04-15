@@ -111,11 +111,7 @@ def parse_json(content):
         yield json_row
 
 
-def upload_rss(xml, output_object):
-    if 'swift' not in CONFIG:
-        print(xml)
-        return
-
+def upload_to_swift(content, objectname):
     import swiftclient
     cfg = CONFIG['swift']
     client = swiftclient.Connection(cfg['auth_url'],
@@ -130,8 +126,8 @@ def upload_rss(xml, output_object):
         # eventual consistenties
         time.sleep(1)
 
-    client.put_object(cfg['container'], output_object,
-                      cStringIO.StringIO(xml))
+    client.put_object(cfg['container'], objectname,
+                      cStringIO.StringIO(content))
 
 
 def generate_rss(content, project=""):
@@ -164,13 +160,19 @@ def generate_rss(content, project=""):
 
 def main():
     if CONFIG['output_mode'] == "combined":
-        upload_rss(generate_rss(get_json()),
-                   CONFIG['swift']['combined_output_object'])
+        content = generate_rss(get_json())
+        if 'swift' in CONFIG:
+            upload_to_swift(content, CONFIG['swift']['combined_output_object'])
+        else:
+            print(content)
     elif CONFIG['output_mode'] == "multiple":
         for project in CONFIG['projects']:
-            upload_rss(
-                generate_rss(get_json(project), project=project),
-                "%s.xml" % (os.path.basename(project)))
+            content = generate_rss(get_json(project), project=project)
+            if 'swift' in CONFIG:
+                objectname = "%s.xml" % os.path.basename(project)
+                upload_to_swift(content, objectname)
+            else:
+                print(content)
 
 if __name__ == '__main__':
     main()
