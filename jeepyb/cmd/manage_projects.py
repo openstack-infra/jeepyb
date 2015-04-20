@@ -588,6 +588,8 @@ def main():
                 continue
 
             try:
+                log.info("Processing project: %s" % project)
+
                 # Figure out all of the options
                 options = section.get('options', dict())
                 description = section.get('description', None)
