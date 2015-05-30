@@ -79,12 +79,13 @@ def post_message(commit, gerrit_user, gerrit_ssh_key, message_file):
     and resubmit a new change-set.
 
     Patches usually take 3 to 7 days to be reviewed so be patient and be
-    available on IRC to ask and answer questions about your work. The more you
-    participate in the community the more rewarding it is for you. You may also
-    notice that the more you get to know people and get to be known, the faster
-    your patches will be reviewed and eventually approved. Get to know others
-    and become known by doing code reviews: anybody can do it, and it's a
-    great way to learn the code base.
+    available on IRC to ask and answer questions about your work. Also it
+    takes generally at least a couple of weeks for cores to get around to
+    reviewing code. The more you participate in the community the more
+    rewarding it is for you. You may also notice that the more you get to know
+    people and get to be known, the faster your patches will be reviewed and
+    eventually approved. Get to know others and become known by doing code
+    reviews: anybody can do it, and it's a great way to learn the code base.
 
     Thanks again for supporting OpenStack, we look forward to working with you.
 
