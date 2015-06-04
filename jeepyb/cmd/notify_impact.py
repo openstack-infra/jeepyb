@@ -31,6 +31,7 @@
 from __future__ import print_function
 
 import argparse
+import logging
 import os
 import re
 import smtplib
@@ -42,6 +43,9 @@ from launchpadlib import uris
 import yaml
 
 from jeepyb import projects
+
+
+logger = logging.getLogger('notify_impact')
 
 BASE_DIR = '/home/gerrit2/review_site'
 EMAIL_TEMPLATE = """
@@ -140,6 +144,11 @@ def create_bug(git_log, args, config):
     author_class = None
 
     buginfo, buglink = actions.create(project, bug_title, bug_descr, args)
+    logger.info('Created a bug in project %(project)s with title "%(title)s": '
+                '%(buglink)s'
+                % {'project': project,
+                   'title': bug_title,
+                   'buglink': buglink})
 
     # If the author of the merging patch matches our configured
     # subscriber lists, then subscribe the configured victims.
@@ -154,6 +163,9 @@ def create_bug(git_log, args, config):
         config = config.get('subscriber_map', {}).get(author_class, [])
         for subscriber in config:
             actions.subscribe(buginfo, subscriber)
+            logger.info('Subscribed %(subscriber)s to bug %(buglink)s'
+                        % {'subscriber': subscriber,
+                           'buglink': buglink})
 
     return buglink
 
