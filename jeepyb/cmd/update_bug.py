@@ -223,11 +223,13 @@ def process_bugtask(launchpad, task, git_log, args):
                     set_fix_committed(bugtask)
         elif args.branch.startswith('proposed/'):
             release_fixcommitted(bugtask)
-        elif args.branch.startswith('stable/'):
-            series = args.branch[7:]
+        else:
+            series = args.branch.rsplit('/', 1)[-1]
+
+        if series:
             # Look for a related task matching the series.
             for reltask in bugtask.related_tasks:
-                if (reltask.bug_target_name.endswith("/" + series) and
+                if (reltask.bug_target_name.endswith(series) and
                         reltask.status != u'Fix Released' and
                         task.needs_change('set_fix_committed')):
                     set_fix_committed(reltask)
@@ -248,10 +250,13 @@ def process_bugtask(launchpad, task, git_log, args):
                     task.needs_change('set_in_progress')):
                 set_in_progress(bugtask, launchpad,
                                 args.uploader, args.change_url)
-        elif args.branch.startswith('stable/'):
-            series = args.branch[7:]
+        else:
+            series = args.branch.rsplit('/', 1)[-1]
+
+        if series:
+            # Look for a related task matching the series.
             for reltask in bugtask.related_tasks:
-                if (reltask.bug_target_name.endswith("/" + series) and
+                if (reltask.bug_target_name.endswith(series) and
                         task.needs_change('set_in_progress') and
                         reltask.status not in [u'Fix Committed',
                                                u'Fix Released']):
