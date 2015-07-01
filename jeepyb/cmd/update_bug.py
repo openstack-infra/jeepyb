@@ -206,6 +206,7 @@ def process_bugtask(launchpad, task, git_log, args):
     """Apply changes to lp bug tasks, based on hook / branch."""
 
     bugtask = task.lp_task
+    series = None
 
     if args.hook == "change-abandoned":
         add_change_abandoned_message(bugtask, args.change_url,
