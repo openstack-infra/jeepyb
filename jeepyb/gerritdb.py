@@ -52,7 +52,7 @@ def connect():
         DB_PASS = secure_config.get("database", "password")
         DB_DB = gerrit_config.get("database", "database")
 
-        if DB_TYPE == "MYSQL":
+        if DB_TYPE.upper() == "MYSQL":
             import MySQLdb
             db_connection = MySQLdb.connect(
                 host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_DB)
