@@ -75,6 +75,13 @@ def has_github(project_full_name):
     return True
 
 
+def has_translations(project_full_name):
+    try:
+        return 'translate' in registry[project_full_name]['options']
+    except KeyError:
+        return False
+
+
 def is_direct_release(project_full_name):
     try:
         return 'direct-release' in registry[project_full_name]['options']
