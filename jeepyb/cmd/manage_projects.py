@@ -64,6 +64,7 @@ import gerritlib.gerrit
 import github
 
 import jeepyb.gerritdb
+import jeepyb.log as l
 import jeepyb.utils as u
 
 registry = u.ProjectsRegistry()
@@ -528,28 +529,13 @@ def create_local_mirror(local_git_dir, project_git,
 
 def main():
     parser = argparse.ArgumentParser(description='Manage projects')
-    parser.add_argument('-v', dest='verbose', action='store_true',
-                        help='verbose output')
-    parser.add_argument('-d', dest='debug', action='store_true',
-                        help='debug output')
+    l.setup_logging_arguments(parser)
     parser.add_argument('--nocleanup', action='store_true',
                         help='do not remove temp directories')
     parser.add_argument('projects', metavar='project', nargs='*',
                         help='name of project(s) to process')
     args = parser.parse_args()
-
-    if args.debug:
-        logging.basicConfig(level=logging.DEBUG,
-                            format='%(asctime)-6s: %(name)s - %(levelname)s'
-                                   ' - %(message)s')
-    elif args.verbose:
-        logging.basicConfig(level=logging.INFO,
-                            format='%(asctime)-6s: %(name)s - %(levelname)s'
-                                   ' - %(message)s')
-    else:
-        logging.basicConfig(level=logging.ERROR,
-                            format='%(asctime)-6s: %(name)s - %(levelname)s'
-                                   ' - %(message)s')
+    l.configure_logging(args)
 
     default_has_github = registry.get_defaults('has-github', True)
 

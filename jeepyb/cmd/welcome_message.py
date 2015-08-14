@@ -31,6 +31,7 @@ import logging
 import paramiko
 
 import jeepyb.gerritdb
+import jeepyb.log as l
 
 BASE_DIR = '/home/gerrit2/review_site'
 
@@ -152,20 +153,12 @@ def main():
     # Don't actually post the message
     parser.add_argument('--dryrun', dest='dryrun', action='store_true')
     parser.add_argument('--no-dryrun', dest='dryrun', action='store_false')
-    parser.add_argument('-v', '--verbose', dest='verbose', action='store_true',
-                        help='verbose output')
     parser.set_defaults(dryrun=False)
+    l.setup_logging_arguments(parser)
 
     args = parser.parse_args()
 
-    if args.verbose:
-        logging.basicConfig(level=logging.DEBUG,
-                            format='%(asctime)-6s: %(name)s - %(levelname)s'
-                                   ' - %(message)s')
-    else:
-        logging.basicConfig(level=logging.ERROR,
-                            format='%(asctime)-6s: %(name)s - %(levelname)s'
-                                   ' - %(message)s')
+    l.configure_logging(args)
 
     # they're a first-timer, post the message on 1st patchset
     if is_newbie(args.uploader) and args.patchset == '1' and not args.dryrun:

@@ -22,8 +22,9 @@ import json
 import logging
 import paramiko
 
+import jeepyb.log as l
+
 logger = logging.getLogger('expire_reviews')
-logger.setLevel(logging.INFO)
 
 
 def expire_patch_set(ssh, patch_id, patch_subject):
@@ -49,15 +50,13 @@ def main():
     parser.add_argument('ssh_key', help='The gerrit admin SSH key file')
     parser.add_argument('--age', dest='age', default='1w',
                         help='The minimum age of a review to expire')
+    l.setup_logging_arguments(parser)
     options = parser.parse_args()
+    l.configure_logging(options)
 
     GERRIT_USER = options.user
     GERRIT_SSH_KEY = options.ssh_key
     EXPIRY_AGE = options.age
-
-    logging.basicConfig(format='%(asctime)-6s: %(name)s - %(levelname)s'
-                               ' - %(message)s',
-                        filename='/var/log/gerrit/expire_reviews.log')
 
     logger.info('Starting expire reviews')
     logger.info('Connecting to Gerrit')

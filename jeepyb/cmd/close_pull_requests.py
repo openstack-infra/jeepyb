@@ -44,6 +44,7 @@ import github
 import logging
 import os
 
+import jeepyb.log as l
 import jeepyb.projects as p
 import jeepyb.utils as u
 
@@ -61,15 +62,13 @@ log = logging.getLogger("close_pull_requests")
 
 def main():
 
-    logging.basicConfig(level=logging.ERROR,
-                        format='%(asctime)-6s: %(name)s - %(levelname)s'
-                               ' - %(message)s')
-
     parser = argparse.ArgumentParser()
+    l.setup_logging_arguments(parser)
     parser.add_argument('--message-file', dest='message_file', default=None,
                         help='The close pull request message')
 
     args = parser.parse_args()
+    l.configure_logging(args)
 
     if args.message_file:
         try:

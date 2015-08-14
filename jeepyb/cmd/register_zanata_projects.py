@@ -14,9 +14,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import argparse
 import logging
 import os
 
+import jeepyb.log as l
 import jeepyb.projects as p
 import jeepyb.translations as t
 import jeepyb.utils as u
@@ -30,9 +32,11 @@ log = logging.getLogger('register_zanata_projects')
 
 
 def main():
-    logging.basicConfig(level=logging.ERROR,
-                        format='%(asctime)-6s: %(name)s - %(levelname)s'
-                               ' - %(message)s')
+    parser = argparse.ArgumentParser(description='Register projects in Zanata')
+    l.setup_logging_arguments(parser)
+    args = parser.parse_args()
+    l.configure_logging(args)
+
     registry = u.ProjectsRegistry(PROJECTS_YAML)
     rest_service = t.ZanataRestService(ZANATA_URL, ZANATA_USER, ZANATA_KEY)
     log.info("Registering projects in Zanata")
