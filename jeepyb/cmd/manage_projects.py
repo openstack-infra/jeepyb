@@ -247,10 +247,10 @@ def create_groups_file(project, gerrit, repo_path):
         with open(group_file, 'w') as fp:
             for group, uuid in uuids.items():
                 fp.write("%s\t%s\n" % (uuid, group))
-    status = git_command(repo_path, "add groups")
-    if status != 0:
-        log.error("Failed to add groups file for project: %s" % project)
-        raise CreateGroupException()
+        status = git_command(repo_path, "add groups")
+        if status != 0:
+            log.error("Failed to add groups file for project: %s" % project)
+            raise CreateGroupException()
 
 
 def make_ssh_wrapper(gerrit_user, gerrit_key):
