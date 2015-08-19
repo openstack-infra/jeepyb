@@ -170,6 +170,28 @@ def create_bug(git_log, args, config):
     return buglink
 
 
+def smtp_connection(args):
+    """Create SMTP connection based on command line arguments, falling
+    back to sensible defaults if no arguments are provided.
+    """
+    conn = None
+    if args.smtp_ssl:
+        port = 465 if not args.smtp_port else args.smtp_port
+        conn = smtplib.SMTP_SSL(args.smtp_host, port)
+    else:
+        port = 25 if not args.smtp_port else args.smtp_port
+        conn = smtplib.SMTP(args.smtp_host, port)
+
+    if args.smtp_starttls:
+        conn.starttls()
+        conn.ehlo()
+
+    if args.smtp_user and args.smtp_pass:
+        conn.login(args.smtp_user, args.smtp_pass)
+
+    return conn
+
+
 def process_impact(git_log, args, config):
     """Process DocImpact flag.
 
@@ -190,12 +212,11 @@ def process_impact(git_log, args, config):
     msg = text.MIMEText(email_content)
     msg['Subject'] = '[%s] %s review request change %s' % \
         (args.project, args.impact, args.change)
-    msg['From'] = 'gerrit2@review.openstack.org'
+    msg['From'] = args.smtp_from
     msg['To'] = args.dest_address
 
-    s = smtplib.SMTP('localhost')
-    s.sendmail('gerrit2@review.openstack.org',
-               args.dest_address, msg.as_string())
+    s = smtp_connection(args)
+    s.sendmail(args.smtp_from, args.dest_address, msg.as_string())
     s.quit()
 
 
@@ -247,6 +268,22 @@ def main():
     parser.add_argument('--dryrun', dest='dryrun', action='store_true')
     parser.add_argument('--no-dryrun', dest='dryrun', action='store_false')
     parser.set_defaults(dryrun=False)
+
+    # SMTP configuration
+    parser.add_argument('--smtp-from', dest='smtp_from',
+                        default='gerrit2@review.openstack.org')
+
+    parser.add_argument('--smtp-host', dest='smtp_host', default="localhost")
+    parser.add_argument('--smtp-port', dest='smtp_port')
+
+    parser.add_argument('--smtp-ssl', dest='smtp_ssl', action='store_true')
+    parser.add_argument('--smtp-starttls', dest='smtp_starttls',
+                        action='store_true')
+
+    parser.add_argument('--smtp-user', dest='smtp_user',
+                        default=os.getenv('SMTP_USER'))
+    parser.add_argument('--smtp-pass', dest='smtp_pass',
+                        default=os.getenv('SMTP_PASS'))
 
     args = parser.parse_args()
 
