@@ -18,7 +18,7 @@ import logging
 
 def setup_logging_arguments(parser):
     """Sets up logging arguments, adds -d, -l and -v to the given parser."""
-    parser.add_argument('-v', dest='verbose', action='store_true',
+    parser.add_argument('-v', '--verbose', dest='verbose', action='store_true',
                         help='verbose output')
     parser.add_argument('-d', dest='debug', action='store_true',
                         help='debug output')
