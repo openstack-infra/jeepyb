@@ -347,6 +347,7 @@ def main():
     parser.add_argument('--reason', default=None)
     # change-merged
     parser.add_argument('--submitter', default=None)
+    parser.add_argument('--newrev', default=None)
     # patchset-created
     parser.add_argument('--uploader', default=None)
     parser.add_argument('--patchset', default=None)

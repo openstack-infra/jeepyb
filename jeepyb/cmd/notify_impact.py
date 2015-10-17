@@ -246,8 +246,13 @@ def main():
     parser.add_argument('--topic', default=None)
     parser.add_argument('--change-owner', default=None)
 
+    # patchset-abandoned
+    parser.add_argument('--abandoner', default=None)
+    parser.add_argument('--reason', default=None)
+
     # change-merged
     parser.add_argument('--submitter', default=None)
+    parser.add_argument('--newrev', default=None)
 
     # patchset-created
     parser.add_argument('--uploader', default=None)
