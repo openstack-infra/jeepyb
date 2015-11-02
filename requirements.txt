@@ -1,13 +1,16 @@
-pbr>=0.6,!=0.7,<1.0
+# The order of packages is significant, because pip processes them in the order
+# of appearance. Changing the order has an impact on the overall integration
+# process, which may cause wedges in the gate later.
+pbr>=1.6
 
 argparse
 gerritlib>=0.3.0
 PyMySQL
-paramiko
+paramiko>=1.13.0
 PyGithub
-pyyaml
+PyYAML>=3.1.0
 pkginfo
 PyRSS2Gen
-python-swiftclient
-requests>=2.5.2
-six>=1.7.0
+python-swiftclient>=2.2.0
+requests!=2.8.0,>=2.5.2
+six>=1.9.0
