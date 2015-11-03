@@ -132,7 +132,7 @@ def find_specs(launchpad, dbconn, args):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('hook')
-    #common
+    # common
     parser.add_argument('--change', default=None)
     parser.add_argument('--change-url', default=None)
     parser.add_argument('--project', default=None)
@@ -140,7 +140,7 @@ def main():
     parser.add_argument('--commit', default=None)
     parser.add_argument('--topic', default=None)
     parser.add_argument('--change-owner', default=None)
-    #change-merged
+    # change-merged
     parser.add_argument('--submitter', default=None)
     # patchset-created
     parser.add_argument('--uploader', default=None)

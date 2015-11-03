@@ -52,7 +52,7 @@ def get_config(config, section, option, default=None):
                                  section)
     if config.has_option(section, option):
         return config.get(section, option)
-    elif not default is None:
+    elif default is not None:
         return default
     else:
         raise ConfigurationError("Invalid configuration, missing "
@@ -105,7 +105,7 @@ def parse_json(content):
             json_row = json.loads(row)
         except(ValueError):
             continue
-        if not json_row or not 'project' in json_row or \
+        if not json_row or 'project' not in json_row or \
                 json_row['project'] not in CONFIG['projects']:
             continue
         yield json_row

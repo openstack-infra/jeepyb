@@ -113,7 +113,7 @@ def FindPrevRev(options):
                  "patch_sets.change_id = changes.change_id AND "
                  "patch_sets.patch_set_id = %s AND "
                  "changes.change_key = \'%s\'\"" % ((options.patchset - 1),
-                 options.changeId))
+                                                    options.changeId))
     revisions = GsqlQuery(sql_query, options)
 
     json_dict = json.loads(revisions[0], strict=False)
@@ -262,7 +262,7 @@ def main():
             approve_category = '--code-review'
         elif approval["category_id"] == "VRIF":
             # Don't re-add verifies
-            #approve_category = '--verified'
+            # approve_category = '--verified'
             continue
         elif approval["category_id"] == "SUBM":
             # We don't care about previous submit attempts
