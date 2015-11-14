@@ -89,12 +89,12 @@ def run_command(cmd, status=False, env=None):
     cmd_list = shlex.split(str(cmd))
     newenv = os.environ
     newenv.update(env)
-    log.debug("Executing command: %s" % " ".join(cmd_list))
+    log.info("Executing command: %s" % " ".join(cmd_list))
     p = subprocess.Popen(cmd_list, stdout=subprocess.PIPE,
                          stderr=subprocess.STDOUT, env=newenv)
     (out, nothing) = p.communicate()
-    log.info("Return code: %s" % p.returncode)
-    log.info("Command said: %s" % out.strip())
+    log.debug("Return code: %s" % p.returncode)
+    log.debug("Command said: %s" % out.strip())
     if status:
         return (p.returncode, out.strip())
     return out.strip()
