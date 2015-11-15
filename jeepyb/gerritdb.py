@@ -53,8 +53,8 @@ def connect():
         DB_DB = gerrit_config.get("database", "database")
 
         if DB_TYPE.upper() == "MYSQL":
-            import PyMySQL
-            db_connection = PyMySQL.connect(
+            import pymysql
+            db_connection = pymysql.connect(
                 host=DB_HOST, user=DB_USER, password=DB_PASS, db=DB_DB)
         else:
             import psycopg2

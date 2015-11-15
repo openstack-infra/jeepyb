@@ -26,7 +26,7 @@ import subprocess
 
 from launchpadlib import launchpad
 from launchpadlib import uris
-import PyMySQL
+import pymysql
 
 from jeepyb import projects as p
 
@@ -154,7 +154,7 @@ def main():
         'Gerrit User Sync', uris.LPNET_SERVICE_ROOT, GERRIT_CACHE_DIR,
         credentials_file=GERRIT_CREDENTIALS, version='devel')
 
-    conn = PyMySQL.connect(
+    conn = pymysql.connect(
         host=DB_HOST, user=DB_USER, password=DB_PASS, db=DB_DB)
 
     find_specs(lpconn, conn, args)
