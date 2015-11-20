@@ -71,6 +71,16 @@ registry = u.ProjectsRegistry()
 
 log = logging.getLogger("manage_projects")
 
+# Gerrit system groups as defined:
+# https://review.openstack.org/Documentation/access-control.html#system_groups
+# Need to set Gerrit system group's uuid to the format it expects.
+GERRIT_SYSTEM_GROUPS = {
+    'Anonymous Users': 'global:Anonymous-Users',
+    'Project Owners': 'global:Project-Owners',
+    'Registered Users': 'global:Registered-Users',
+    'Change Owner': 'global:Change-Owner',
+}
+
 
 class FetchConfigException(Exception):
     pass
@@ -202,7 +212,16 @@ def push_acl_config(project, remote_url, repo_path, gitid, env=None):
 
 
 def _get_group_uuid(group):
-    """Wait for up to 10 seconds for the group to be created in the DB."""
+    """
+    Gerrit keeps internal user groups in the DB while it keeps systems
+    groups in All-Projects groups file (in refs/meta/config).  This
+    will only get the UUIDs for internal user groups.
+
+    Note: 'Administrators', 'Non-Interactive Users' and all other custom
+    groups in Gerrit are defined as internal user groups.
+
+    Wait for up to 10 seconds for the group to be created in the DB.
+    """
     query = "SELECT group_uuid FROM account_groups WHERE name = %s"
     con = jeepyb.gerritdb.connect()
     for x in range(10):
@@ -221,6 +240,8 @@ def get_group_uuid(gerrit, group):
     uuid = _get_group_uuid(group)
     if uuid:
         return uuid
+    if group in GERRIT_SYSTEM_GROUPS:
+        return GERRIT_SYSTEM_GROUPS[group]
     gerrit.createGroup(group)
     uuid = _get_group_uuid(group)
     if uuid:
@@ -549,9 +570,10 @@ def main():
     GERRIT_KEY = registry.get_defaults('gerrit-key')
     GERRIT_GITID = registry.get_defaults('gerrit-committer')
     GERRIT_REPLICATE = registry.get_defaults('gerrit-replicate', True)
-    GERRIT_SYSTEM_USER = registry.get_defaults('gerrit-system-user', 'gerrit2')
-    GERRIT_SYSTEM_GROUP = registry.get_defaults('gerrit-system-group',
-                                                'gerrit2')
+    GERRIT_OS_SYSTEM_USER = registry.get_defaults('gerrit-system-user',
+                                                  'gerrit2')
+    GERRIT_OS_SYSTEM_GROUP = registry.get_defaults('gerrit-system-group',
+                                                   'gerrit2')
     DEFAULT_HOMEPAGE = registry.get_defaults('homepage')
     DEFAULT_HAS_ISSUES = registry.get_defaults('has-issues', False)
     DEFAULT_HAS_DOWNLOADS = registry.get_defaults('has-downloads', False)
@@ -610,7 +632,7 @@ def main():
                 # Create the repo for the local git mirror
                 create_local_mirror(
                     LOCAL_GIT_DIR, project_git,
-                    GERRIT_SYSTEM_USER, GERRIT_SYSTEM_GROUP)
+                    GERRIT_OS_SYSTEM_USER, GERRIT_OS_SYSTEM_GROUP)
 
                 if not os.path.exists(repo_path) or project_created:
                     # We don't have a local copy already, get one
