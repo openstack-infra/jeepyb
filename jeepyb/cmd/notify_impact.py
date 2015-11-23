@@ -121,7 +121,7 @@ def create_bug(git_log, args, config):
                    'OpenStack infra team (#openstack-infra on freenode) for '
                    'help if you need to.\n'
                    % args.project)
-        lp_project = 'openstack-manuals'
+        lp_project = project_name
 
     lpconn = launchpad.Launchpad.login_with(
         'Gerrit User Sync',
