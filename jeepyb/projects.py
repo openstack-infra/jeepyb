@@ -21,7 +21,7 @@ Expected review.projects.yaml format:
   groups:
     - awesome-group
   options:
-    - direct-release
+    - delay-release
     - no-launchpad-bugs
     - no-launchpad-blueprints
 """
@@ -82,9 +82,9 @@ def has_translations(project_full_name):
         return False
 
 
-def is_direct_release(project_full_name):
+def is_delay_release(project_full_name):
     try:
-        return 'direct-release' in registry[project_full_name]['options']
+        return 'delay-release' in registry[project_full_name]['options']
     except KeyError:
         return False
 
