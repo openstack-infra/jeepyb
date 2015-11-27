@@ -114,10 +114,13 @@ def create_bug(git_log, args, config):
     project_name = args.project.rstrip('/')
     lp_project = projects.docimpact_target(project_name)
     if lp_project == 'unknown':
-        prelude = ('\n\nDear documentation bug triager. This bug was created '
-                   'here because we did not know how to map the project name '
-                   '"%s" to a launchpad project name. This indicates that the '
-                   'notify_impact config needs tweaks. You can ask the '
+
+        prelude = ('\n\Dear bug triager. This bug was created since a '
+                   'commit was marked with DOCIMPACT.\n'
+                   'Your project "%s" is set up so that we directly report '
+                   'the documentation bugs against it. If this needs '
+                   'changing, the docimpact-group option needs to be added '
+                   'for the project. You can ask the '
                    'OpenStack infra team (#openstack-infra on freenode) for '
                    'help if you need to.\n'
                    % args.project)
