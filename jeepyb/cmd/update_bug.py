@@ -215,7 +215,7 @@ def process_bugtask(launchpad, task, git_log, args):
 
     if args.hook == "change-merged":
         if args.branch == 'master':
-            if (p.is_direct_release(args.project) and
+            if (not p.is_delay_release(args.project) and
                     task.needs_change('set_fix_released')):
                 set_fix_released(bugtask)
             else:
