@@ -143,7 +143,7 @@ def main():
     # patchset-abandoned
     parser.add_argument('--abandoner', default=None)
     parser.add_argument('--reason', default=None)
-    #change-merged
+    # change-merged
     parser.add_argument('--submitter', default=None)
     parser.add_argument('--newrev', default=None)
     # patchset-created
