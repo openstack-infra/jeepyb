@@ -110,12 +110,13 @@ def create_bug(git_log, args, config):
     """
 
     # Determine what LP project to use
-    prelude = ''
+    prelude = ('\nDear bug triager. This bug was created since a '
+               'commit was marked with DOCIMPACT.\n')
     project_name = args.project.rstrip('/')
     lp_project = projects.docimpact_target(project_name)
     if lp_project == 'unknown':
 
-        prelude = ('\n\Dear bug triager. This bug was created since a '
+        prelude = ('\nDear bug triager. This bug was created since a '
                    'commit was marked with DOCIMPACT.\n'
                    'Your project "%s" is set up so that we directly report '
                    'the documentation bugs against it. If this needs '
