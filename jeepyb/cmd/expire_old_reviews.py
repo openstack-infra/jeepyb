@@ -74,7 +74,7 @@ def main():
 
     for line in stdout:
         row = json.loads(line)
-        if 'rowCount' not in row:
+        if 'rowCount' not in row and 'open' in row and row['open']:
             # Search for negative approvals
             for approval in row['currentPatchSet']['approvals']:
                 if approval['value'] in ('-1', '-2'):
