@@ -47,6 +47,7 @@ from jeepyb import projects
 
 logger = logging.getLogger('notify_impact')
 
+DOC_TAG = "doc"
 BASE_DIR = '/home/gerrit2/review_site'
 EMAIL_TEMPLATE = """
 Hi, I'd like you to take a look at this patch for potential
@@ -72,9 +73,17 @@ class BugActionsReal(object):
         self.lpconn = lpconn
 
     def create(self, project, bug_title, bug_descr, args):
+        # If the bug report is not targeting the 'openstack-manuals'
+        # project, add an extra doc tag to make the bug easier to
+        # look up.
+        lp_target_project = str(project).split('/')[-1]
+        tags = args.project.split('/')[1]
+        if lp_target_project != 'openstack-manuals':
+            tags = [tags, DOC_TAG]
+
         buginfo = self.lpconn.bugs.createBug(
             target=project, title=bug_title,
-            description=bug_descr, tags=args.project.split('/')[1])
+            description=bug_descr, tags=tags)
         buglink = buginfo.web_link
         return buginfo, buglink
 
