@@ -3,7 +3,6 @@
 # process, which may cause wedges in the gate later.
 pbr>=1.6
 
-argparse
 gerritlib>=0.3.0
 PyMySQL
 paramiko>=1.13.0
