@@ -34,6 +34,7 @@ SCRATCH_OWNER = os.environ.get('SCRATCH_OWNER', 'scratch')
 SCRATCH_GROUP = os.environ.get('SCRATCH_GROUP', 'scratch')
 CGIT_USER = os.environ.get('CGIT_USER', 'cgit')
 CGIT_GROUP = os.environ.get('CGIT_GROUP', 'cgit')
+DEFAULT_ORG = os.environ.get('DEFAULT_ORG', None)
 
 
 def main():
@@ -42,7 +43,13 @@ def main():
     names = set()
     for entry in registry.configs_list:
         project = entry['project']
-        (org, name) = project.split('/')
+        if '/' in project:
+            (org, name) = project.split('/')
+        else:
+            if DEFAULT_ORG is None:
+                raise RuntimeError('No org specified for project %s and no'
+                                   'DEFAULT_ORG is set.' % project)
+            (org, name) = (DEFAULT_ORG, project)
         description = entry.get('description', name)
         assert project not in names
         names.add(project)
