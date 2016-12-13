@@ -100,7 +100,7 @@ def set_in_progress(bugtask, launchpad, uploader, change_url):
     # +-----------------+-----------------------------------------+
     # | email_address   | external_id                             |
     # +-----------------+-----------------------------------------+
-    # | plugh@xyzzy.com | https://login.launchpad.net/+id/fR0bnU1 |
+    # | plugh@xyzzy.com | https://login.ubuntu.com/+id/fR0bnU1 |
     # | bar@foo.org     | mailto:bar@foo.org                      |
     # | NULL            | username:quux                           |
     # +-----------------+-----------------------------------------+
@@ -112,7 +112,7 @@ def set_in_progress(bugtask, launchpad, uploader, change_url):
                 SELECT t.account_id FROM account_external_ids t
                 WHERE t.email_address = %s )
             original ON t.account_id = original.account_id
-            AND t.external_id LIKE 'https://login.launchpad.net%%'"""
+            AND t.external_id LIKE 'https://login.ubuntu.com%%'"""
 
     cursor = jeepyb.gerritdb.connect().cursor()
     cursor.execute(query, searchkey)
