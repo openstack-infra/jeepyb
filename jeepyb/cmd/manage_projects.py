@@ -211,7 +211,7 @@ def push_acl_config(project, remote_url, repo_path, gitid, env=None):
     return True
 
 
-def _get_group_uuid(group):
+def _get_group_uuid(group, retries=10):
     """
     Gerrit keeps internal user groups in the DB while it keeps systems
     groups in All-Projects groups file (in refs/meta/config).  This
@@ -224,7 +224,7 @@ def _get_group_uuid(group):
     """
     query = "SELECT group_uuid FROM account_groups WHERE name = %s"
     con = jeepyb.gerritdb.connect()
-    for x in range(10):
+    for x in range(retries):
         cursor = con.cursor()
         cursor.execute(query, (group,))
         data = cursor.fetchone()
@@ -232,12 +232,13 @@ def _get_group_uuid(group):
         con.commit()
         if data:
             return data[0]
-        time.sleep(1)
+        if retries > 1:
+            time.sleep(1)
     return None
 
 
 def get_group_uuid(gerrit, group):
-    uuid = _get_group_uuid(group)
+    uuid = _get_group_uuid(group, retries=1)
     if uuid:
         return uuid
     if group in GERRIT_SYSTEM_GROUPS:
