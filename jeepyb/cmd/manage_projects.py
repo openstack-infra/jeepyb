@@ -457,6 +457,16 @@ def update_local_copy(repo_path, track_upstream, git_opts, ssh_env):
     git_command(repo_path, "checkout -B master origin/master")
 
 
+def fsck_repo(repo_path):
+    rc, out = git_command_output(repo_path, 'fsck --full')
+    # Check for non zero return code or warnings which should
+    # be treated as errors. In this case zeroPaddedFilemodes
+    # will not be accepted by Gerrit/jgit but are accepted by C git.
+    if rc != 0 or 'zeroPaddedFilemode' in out:
+        log.error('git fsck of %s failed:\n%s' % (repo_path, out))
+        raise Exception('git fsck failed not importing')
+
+
 def push_to_gerrit(repo_path, project, push_string, remote_url, ssh_env):
     try:
         git_command(repo_path, push_string % remote_url, env=ssh_env)
@@ -649,6 +659,8 @@ def main():
                     # in shape to have work done.
                     update_local_copy(
                         repo_path, track_upstream, git_opts, ssh_env)
+
+                fsck_repo(repo_path)
 
                 description = (
                     find_description_override(repo_path) or description)
