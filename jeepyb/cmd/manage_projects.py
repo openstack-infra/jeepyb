@@ -52,6 +52,7 @@
 
 import argparse
 import ConfigParser
+import json
 import logging
 import os
 import re
@@ -288,11 +289,30 @@ def make_ssh_wrapper(gerrit_user, gerrit_key):
 
 def create_update_github_project(
         default_has_issues, default_has_downloads, default_has_wiki,
-        github_secure_config, options, project, description, homepage):
+        github_secure_config, options, project, description, homepage,
+        project_cache):
     created = False
     has_issues = 'has-issues' in options or default_has_issues
     has_downloads = 'has-downloads' in options or default_has_downloads
     has_wiki = 'has-wiki' in options or default_has_wiki
+
+    needs_update = False
+    if not project_cache[project].get('created-in-github', False):
+        needs_update = True
+    if not project_cache[project].get('gerrit-in-team', False):
+        needs_update = True
+    if project_cache[project].get('description') != description:
+        needs_update = True
+    if project_cache[project].get('homepage') != homepage:
+        needs_update = True
+    if project_cache[project].get('has_issues') != has_issues:
+        needs_update = True
+    if project_cache[project].get('has_downloads') != has_downloads:
+        needs_update = True
+    if project_cache[project].get('has_wiki') != has_wiki:
+        needs_update = True
+    if not needs_update:
+        return False
 
     secure_config = ConfigParser.ConfigParser()
     secure_config.read(github_secure_config)
@@ -302,6 +322,7 @@ def create_update_github_project(
     else:
         ghub = github.Github(secure_config.get("github", "username"),
                              secure_config.get("github", "password"))
+
     orgs = ghub.get_user().get_orgs()
     orgs_dict = dict(zip([o.login.lower() for o in orgs], orgs))
 
@@ -324,14 +345,19 @@ def create_update_github_project(
         # If necessary, update project on Github
         if description and description != repo.description:
             repo.edit(repo_name, description=description)
+            project_cache[project]['description'] = description
         if homepage and homepage != repo.homepage:
             repo.edit(repo_name, homepage=homepage)
+            project_cache[project]['homepage'] = homepage
         if has_issues != repo.has_issues:
             repo.edit(repo_name, has_issues=has_issues)
+            project_cache[project]['has_issues'] = has_issues
         if has_downloads != repo.has_downloads:
             repo.edit(repo_name, has_downloads=has_downloads)
+            project_cache[project]['has_downloads'] = has_downloads
         if has_wiki != repo.has_wiki:
             repo.edit(repo_name, has_wiki=has_wiki)
+            project_cache[project]['has_wiki'] = has_wiki
 
     except github.GithubException:
         repo = org.create_repo(repo_name,
@@ -339,19 +365,28 @@ def create_update_github_project(
                                has_issues=has_issues,
                                has_downloads=has_downloads,
                                has_wiki=has_wiki)
+        project_cache[project]['created-in-github'] = True
+        project_cache[project]['has_wiki'] = has_wiki
+        project_cache[project]['has_downloads'] = has_downloads
+        project_cache[project]['has_issues'] = has_issues
+
         if description:
             repo.edit(repo_name, description=description)
+            project_cache[project]['description'] = description
         if homepage:
             repo.edit(repo_name, homepage=homepage)
+            project_cache[project]['homepage'] = homepage
         repo.edit(repo_name, has_issues=has_issues,
                   has_downloads=has_downloads,
                   has_wiki=has_wiki)
+        created = True
 
+    if project_cache[project].get('gerrit-in-team', False):
         if 'gerrit' not in [team.name for team in repo.get_teams()]:
             teams = org.get_teams()
             teams_dict = dict(zip([t.name.lower() for t in teams], teams))
             teams_dict['gerrit'].add_to_repos(repo)
-        created = True
+        project_cache[project]['gerrit-in-team'] = True
 
     return created
 
@@ -606,6 +641,10 @@ def main():
     GITHUB_SECURE_CONFIG = registry.get_defaults(
         'github-config',
         '/etc/github/github-projects.secure.config')
+    PROJECT_CACHE_FILE = os.path.join(JEEPYB_CACHE_DIR, 'project.cache')
+    project_cache = {}
+    if os.path.exists(PROJECT_CACHE_FILE):
+        project_cache = json.loads(open(PROJECT_CACHE_FILE, 'r').read())
 
     gerrit = gerritlib.gerrit.Gerrit(GERRIT_HOST,
                                      GERRIT_USER,
@@ -647,12 +686,17 @@ def main():
                 acl_config = section.get(
                     'acl-config',
                     '%s.config' % os.path.join(ACL_DIR, project))
+                project_cache.setdefault(project, {})
 
                 # Create the project in Gerrit first, since it will fail
                 # spectacularly if its project directory or local replica
                 # already exist on disk
-                project_created = create_gerrit_project(
-                    project, project_list, gerrit)
+                project_created = project_cache[project].get(
+                    'project-created', False)
+                if not project_created:
+                    project_created = create_gerrit_project(
+                        project, project_list, gerrit)
+                    project_cache[project]['project-created'] = project_created
 
                 # Create the repo for the local git mirror
                 create_local_mirror(
@@ -679,10 +723,15 @@ def main():
                     find_description_override(repo_path) or description)
 
                 if project_created:
-                    push_to_gerrit(
-                        repo_path, project, push_string, remote_url, ssh_env)
-                    if GERRIT_REPLICATE:
-                        gerrit.replicate(project)
+                    pushed_to_gerrit = project_cache[project].get(
+                        'pushed-to-gerrit', False)
+                    if not pushed_to_gerrit:
+                        push_to_gerrit(
+                            repo_path, project, push_string,
+                            remote_url, ssh_env)
+                        project_cache[project]['pushed-to-gerrit'] = True
+                        if GERRIT_REPLICATE:
+                            gerrit.replicate(project)
 
                 # If we're configured to track upstream, make sure we have
                 # upstream's refs, and then push them to the appropriate
@@ -699,7 +748,7 @@ def main():
                     created = create_update_github_project(
                         DEFAULT_HAS_ISSUES, DEFAULT_HAS_DOWNLOADS,
                         DEFAULT_HAS_WIKI, GITHUB_SECURE_CONFIG,
-                        options, project, description, homepage)
+                        options, project, description, homepage, project_cache)
                     if created and GERRIT_REPLICATE:
                         gerrit.replicate(project)
 
@@ -708,6 +757,9 @@ def main():
                     "Problems creating %s, moving on." % project)
                 continue
     finally:
+        with open(PROJECT_CACHE_FILE, 'w') as cache_out:
+            cache_out.write(json.dumps(
+                project_cache, sort_keys=True, indent=2))
         os.unlink(ssh_env['GIT_SSH'])
 
 if __name__ == "__main__":
