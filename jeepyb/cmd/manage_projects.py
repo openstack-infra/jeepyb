@@ -286,7 +286,7 @@ def make_ssh_wrapper(gerrit_user, gerrit_key):
     return dict(GIT_SSH=name)
 
 
-def create_github_project(
+def create_update_github_project(
         default_has_issues, default_has_downloads, default_has_wiki,
         github_secure_config, options, project, description, homepage):
     created = False
@@ -320,6 +320,19 @@ def create_github_project(
         return False
     try:
         repo = org.get_repo(repo_name)
+
+        # If necessary, update project on Github
+        if description and description != repo.description:
+            repo.edit(repo_name, description=description)
+        if homepage and homepage != repo.homepage:
+            repo.edit(repo_name, homepage=homepage)
+        if has_issues != repo.has_issues:
+            repo.edit(repo_name, has_issues=has_issues)
+        if has_downloads != repo.has_downloads:
+            repo.edit(repo_name, has_downloads=has_downloads)
+        if has_wiki != repo.has_wiki:
+            repo.edit(repo_name, has_wiki=has_wiki)
+
     except github.GithubException:
         repo = org.create_repo(repo_name,
                                homepage=homepage,
@@ -683,7 +696,7 @@ def main():
                         remote_url, repo_path, ssh_env, gerrit, GERRIT_GITID)
 
                 if 'has-github' in options or default_has_github:
-                    created = create_github_project(
+                    created = create_update_github_project(
                         DEFAULT_HAS_ISSUES, DEFAULT_HAS_DOWNLOADS,
                         DEFAULT_HAS_WIKI, GITHUB_SECURE_CONFIG,
                         options, project, description, homepage)
