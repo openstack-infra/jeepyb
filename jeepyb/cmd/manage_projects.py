@@ -59,6 +59,7 @@ import logging
 import os
 import re
 import shlex
+import shutil
 import subprocess
 import tempfile
 import time
@@ -304,15 +305,11 @@ def create_update_github_project(
         needs_update = True
     if not cache.get('gerrit-in-team', False):
         needs_update = True
-    if description and cache.get('description') != description:
+    if cache.get('has_issues', default_has_issues) != has_issues:
         needs_update = True
-    if homepage and cache.get('homepage') != homepage:
+    if cache.get('has_downloads', default_has_downloads) != has_downloads:
         needs_update = True
-    if cache.get('has_issues') != has_issues:
-        needs_update = True
-    if cache.get('has_downloads') != has_downloads:
-        needs_update = True
-    if cache.get('has_wiki') != has_wiki:
+    if cache.get('has_wiki', default_has_wiki) != has_wiki:
         needs_update = True
     if not needs_update:
         return False
@@ -695,28 +692,26 @@ def main():
                 project_created = project_cache[project].get(
                     'project-created', False)
                 if not project_created:
-                    project_created = create_gerrit_project(
-                        project, project_list, gerrit)
-                    project_cache[project]['project-created'] = project_created
-                if not project_created:
-                    continue
+                    try:
+                        project_created = create_gerrit_project(
+                            project, project_list, gerrit)
+                        project_cache[project]['project-created'] = True
+                    except Exception:
+                        project_cache[project]['project-created'] = False
+                        continue
 
                 pushed_to_gerrit = project_cache[project].get(
                     'pushed-to-gerrit', False)
                 if not pushed_to_gerrit:
-                    if not os.path.exists(repo_path):
-                        # We don't have a local copy already, get one
+                    # We haven't pushed to gerrit, so grab the repo again
+                    if os.path.exists(repo_path):
+                        shutil.rmtree(repo_path)
 
-                        # Make Local repo
-                        push_string = make_local_copy(
-                            repo_path, project, project_list,
-                            git_opts, ssh_env, upstream, GERRIT_HOST,
-                            GERRIT_PORT, project_git, GERRIT_GITID)
-                    else:
-                        # We do have a local copy of it already, make sure
-                        # it's in shape to have work done.
-                        update_local_copy(
-                            repo_path, track_upstream, git_opts, ssh_env)
+                    # Make Local repo
+                    push_string = make_local_copy(
+                        repo_path, project, project_list,
+                        git_opts, ssh_env, upstream, GERRIT_HOST,
+                        GERRIT_PORT, project_git, GERRIT_GITID)
 
                     description = (
                         find_description_override(repo_path)
@@ -724,9 +719,10 @@ def main():
 
                     fsck_repo(repo_path)
 
-                    push_to_gerrit(
-                        repo_path, project, push_string,
-                        remote_url, ssh_env)
+                    if push_string:
+                        push_to_gerrit(
+                            repo_path, project, push_string,
+                            remote_url, ssh_env)
                     project_cache[project]['pushed-to-gerrit'] = True
                     if GERRIT_REPLICATE:
                         gerrit.replicate(project)
