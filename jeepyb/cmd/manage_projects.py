@@ -348,23 +348,6 @@ def create_update_github_project(
     try:
         repo = org.get_repo(repo_name)
 
-        # If necessary, update project on Github
-        if description and description != repo.description:
-            repo.edit(repo_name, description=description)
-            cache['description'] = description
-        if homepage and homepage != repo.homepage:
-            repo.edit(repo_name, homepage=homepage)
-            cache['homepage'] = homepage
-        if has_issues != repo.has_issues:
-            repo.edit(repo_name, has_issues=has_issues)
-            cache['has_issues'] = has_issues
-        if has_downloads != repo.has_downloads:
-            repo.edit(repo_name, has_downloads=has_downloads)
-            cache['has_downloads'] = has_downloads
-        if has_wiki != repo.has_wiki:
-            repo.edit(repo_name, has_wiki=has_wiki)
-            cache['has_wiki'] = has_wiki
-
     except github.GithubException:
         repo = org.create_repo(repo_name,
                                homepage=homepage,
@@ -376,16 +359,23 @@ def create_update_github_project(
         cache['has_downloads'] = has_downloads
         cache['has_issues'] = has_issues
 
-        if description:
-            repo.edit(repo_name, description=description)
-            cache['description'] = description
-        if homepage:
-            repo.edit(repo_name, homepage=homepage)
-            cache['homepage'] = homepage
-        repo.edit(repo_name, has_issues=has_issues,
-                  has_downloads=has_downloads,
-                  has_wiki=has_wiki)
         created = True
+
+        kwargs = {}
+        # If necessary, update project on Github
+        if description and description != repo.description:
+            kwargs['description'] = description
+        if homepage and homepage != repo.homepage:
+            kwargs['homepage'] = homepage
+        if has_issues != repo.has_issues:
+            kwargs['has_issues'] = has_issues
+        if has_downloads != repo.has_downloads:
+            kwargs['has_downloads'] = has_downloads
+        if has_wiki != repo.has_wiki:
+            kwargs['has_wiki'] = has_wiki
+
+        repo.edit(repo_name, **kwargs)
+        cache.update(kwargs)
 
     if cache.get('gerrit-in-team', False):
         if 'gerrit' not in [team.name for team in repo.get_teams()]:
