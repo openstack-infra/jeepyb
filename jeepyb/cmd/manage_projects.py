@@ -339,81 +339,6 @@ def find_description_override(repo_path):
     return None
 
 
-def make_local_copy(repo_path, project, project_list,
-                    git_opts, ssh_env, upstream, GERRIT_HOST, GERRIT_PORT,
-                    project_git, GERRIT_GITID):
-
-    # Ensure that the base location exists
-    if not os.path.exists(os.path.dirname(repo_path)):
-        os.makedirs(os.path.dirname(repo_path))
-
-    # Three choices
-    #  - If gerrit has it, get from gerrit
-    #  - If gerrit doesn't have it:
-    #    - If it has an upstream, clone that
-    #    - If it doesn't, create it
-
-    # Gerrit knows about the project, clone it
-    # TODO(mordred): there is a possible failure condition here
-    #                we should consider 'gerrit has it' to be
-    #                'gerrit repo has a master branch'
-    if project in project_list:
-        try:
-            u.run_command(
-                "git clone %(remote_url)s %(repo_path)s" % git_opts,
-                env=ssh_env)
-            if upstream:
-                u.git_command(
-                    repo_path,
-                    "remote add -f upstream %(upstream)s" % git_opts)
-            return None
-        except Exception:
-            # If the clone fails, then we need to clone from the upstream
-            # source
-            pass
-
-    # Gerrit doesn't have it, but it has an upstream configured
-    # We're probably importing it for the first time, clone
-    # upstream, but then ongoing we want gerrit to ge origin
-    # and upstream to be only there for ongoing tracking
-    # purposes, so rename origin to upstream and add a new
-    # origin remote that points at gerrit
-    if upstream:
-        u.run_command(
-            "git clone %(upstream)s %(repo_path)s" % git_opts,
-            env=ssh_env)
-        u.git_command(
-            repo_path,
-            "fetch origin +refs/heads/*:refs/copy/heads/*",
-            env=ssh_env)
-        u.git_command(repo_path, "remote rename origin upstream")
-        u.git_command(
-            repo_path,
-            "remote add origin %(remote_url)s" % git_opts)
-        return "push %s +refs/copy/heads/*:refs/heads/*"
-
-    # Neither gerrit has it, nor does it have an upstream,
-    # just create a whole new one
-    else:
-        u.run_command("git init %s" % repo_path)
-        u.git_command(
-            repo_path,
-            "remote add origin %(remote_url)s" % git_opts)
-        with open(os.path.join(repo_path,
-                               ".gitreview"),
-                  'w') as gitreview:
-            gitreview.write("""[gerrit]
-host=%s
-port=%s
-project=%s
-""" % (GERRIT_HOST, GERRIT_PORT, project_git))
-        u.git_command(repo_path, "add .gitreview")
-        cmd = ("commit -a -m'Added .gitreview' --author='%s'"
-               % GERRIT_GITID)
-        u.git_command(repo_path, cmd)
-        return "push %s HEAD:refs/heads/master"
-
-
 def fsck_repo(repo_path):
     rc, out = u.git_command_output(repo_path, 'fsck --full')
     # Check for non zero return code or warnings which should
@@ -622,7 +547,7 @@ def main():
                         shutil.rmtree(repo_path)
 
                     # Make Local repo
-                    push_string = make_local_copy(
+                    push_string = u.make_local_copy(
                         repo_path, project, project_list,
                         git_opts, ssh_env, upstream, GERRIT_HOST,
                         GERRIT_PORT, project_git, GERRIT_GITID)
