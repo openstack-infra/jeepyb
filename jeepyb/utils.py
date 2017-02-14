@@ -13,16 +13,70 @@
 # under the License.
 
 import ConfigParser
+import logging
 import os
+import shlex
+import subprocess
+import tempfile
 import yaml
 
 PROJECTS_INI = os.environ.get('PROJECTS_INI', '/home/gerrit2/projects.ini')
 PROJECTS_YAML = os.environ.get('PROJECTS_YAML', '/home/gerrit2/projects.yaml')
 
+log = logging.getLogger("jeepyb.utils")
+
 
 def short_project_name(full_project_name):
     """Return the project part of the git repository name."""
     return full_project_name.split('/')[-1]
+
+
+def run_command(cmd, status=False, env=None):
+    env = env or {}
+    cmd_list = shlex.split(str(cmd))
+    newenv = os.environ
+    newenv.update(env)
+    log.info("Executing command: %s" % " ".join(cmd_list))
+    p = subprocess.Popen(cmd_list, stdout=subprocess.PIPE,
+                         stderr=subprocess.STDOUT, env=newenv)
+    (out, nothing) = p.communicate()
+    log.debug("Return code: %s" % p.returncode)
+    log.debug("Command said: %s" % out.strip())
+    if status:
+        return (p.returncode, out.strip())
+    return out.strip()
+
+
+def run_command_status(cmd, env=None):
+    env = env or {}
+    return run_command(cmd, True, env)
+
+
+def git_command(repo_dir, sub_cmd, env=None):
+    env = env or {}
+    git_dir = os.path.join(repo_dir, '.git')
+    cmd = "git --git-dir=%s --work-tree=%s %s" % (git_dir, repo_dir, sub_cmd)
+    status, _ = run_command(cmd, True, env)
+    return status
+
+
+def git_command_output(repo_dir, sub_cmd, env=None):
+    env = env or {}
+    git_dir = os.path.join(repo_dir, '.git')
+    cmd = "git --git-dir=%s --work-tree=%s %s" % (git_dir, repo_dir, sub_cmd)
+    status, out = run_command(cmd, True, env)
+    return (status, out)
+
+
+def make_ssh_wrapper(gerrit_user, gerrit_key):
+    (fd, name) = tempfile.mkstemp(text=True)
+    os.write(fd, '#!/bin/bash\n')
+    os.write(fd,
+             'ssh -i %s -l %s -o "StrictHostKeyChecking no" $@\n' %
+             (gerrit_key, gerrit_user))
+    os.close(fd)
+    os.chmod(name, 0o755)
+    return dict(GIT_SSH=name)
 
 
 class ProjectsRegistry(object):
