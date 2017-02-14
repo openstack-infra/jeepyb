@@ -291,44 +291,51 @@ def create_update_github_project(
     except KeyError:
         # We do not have control of this github org ignore the project.
         return False
+
     try:
+        log.info("Fetching github info about %s", repo_name)
         repo = org.get_repo(repo_name)
 
     except github.GithubException:
+        log.info("Creating %s in github", repo_name)
         repo = org.create_repo(repo_name,
                                homepage=homepage,
                                has_issues=has_issues,
                                has_downloads=has_downloads,
                                has_wiki=has_wiki)
-        cache['created-in-github'] = True
-        cache['has_wiki'] = has_wiki
-        cache['has_downloads'] = has_downloads
-        cache['has_issues'] = has_issues
-
         created = True
 
-        kwargs = {}
-        # If necessary, update project on Github
-        if description and description != repo.description:
-            kwargs['description'] = description
-        if homepage and homepage != repo.homepage:
-            kwargs['homepage'] = homepage
-        if has_issues != repo.has_issues:
-            kwargs['has_issues'] = has_issues
-        if has_downloads != repo.has_downloads:
-            kwargs['has_downloads'] = has_downloads
-        if has_wiki != repo.has_wiki:
-            kwargs['has_wiki'] = has_wiki
+    cache['created-in-github'] = True
+    cache['has_wiki'] = has_wiki
+    cache['has_downloads'] = has_downloads
+    cache['has_issues'] = has_issues
 
+    kwargs = {}
+    # If necessary, update project on Github
+    if description and description != repo.description:
+        kwargs['description'] = description
+    if homepage and homepage != repo.homepage:
+        kwargs['homepage'] = homepage
+    if has_issues != repo.has_issues:
+        kwargs['has_issues'] = has_issues
+    if has_downloads != repo.has_downloads:
+        kwargs['has_downloads'] = has_downloads
+    if has_wiki != repo.has_wiki:
+        kwargs['has_wiki'] = has_wiki
+
+    if kwargs:
+        log.info("Updating github repo info about %s", repo_name)
         repo.edit(repo_name, **kwargs)
-        cache.update(kwargs)
+    cache.update(kwargs)
 
-    if cache.get('gerrit-in-team', False):
+    if not cache.get('gerrit-in-team', False):
         if 'gerrit' not in [team.name for team in repo.get_teams()]:
+            log.info("Adding gerrit to github team for %s", repo_name)
             teams = org.get_teams()
             teams_dict = dict(zip([t.name.lower() for t in teams], teams))
             teams_dict['gerrit'].add_to_repos(repo)
         cache['gerrit-in-team'] = True
+        created = True
 
     return created
 
@@ -567,7 +574,6 @@ def main():
     project_list = gerrit.listProjects()
     ssh_env = u.make_ssh_wrapper(GERRIT_USER, GERRIT_KEY)
     try:
-
         for section in registry.configs_list:
             project = section['project']
             if args.projects and project not in args.projects:
