@@ -25,6 +25,7 @@ import jeepyb.utils as u
 PROJECTS_YAML = os.environ.get('PROJECTS_YAML', '/home/hound/projects.yaml')
 GIT_SERVER = os.environ.get('GIT_BASE', 'git.openstack.org')
 DATA_PATH = os.environ.get('DATA_PATH', 'data')
+GIT_PROTOCOL = os.environ.get('GIT_PROTOCOL', 'git://')
 
 
 def main():
@@ -33,8 +34,8 @@ def main():
     repos = {}
     for project in projects:
         repos[os.path.basename(project)] = {
-            'url': "git://%(gitbase)s/%(project)s" % dict(
-                gitbase=GIT_SERVER, project=project),
+            'url': "%(proto)s%(gitbase)s/%(project)s" % dict(
+                proto=GIT_PROTOCOL, gitbase=GIT_SERVER, project=project),
             'url-pattern': {
                 'base-url': "http://%(gitbase)s/cgit/%(project)s"
                             "/tree/{path}{anchor}" % dict(gitbase=GIT_SERVER,
