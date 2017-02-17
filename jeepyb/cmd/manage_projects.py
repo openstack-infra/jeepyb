@@ -467,7 +467,11 @@ def main():
                                              '/var/lib/jeepyb')
     ACL_DIR = registry.get_defaults('acl-dir')
     GERRIT_HOST = registry.get_defaults('gerrit-host')
+    GITREVIEW_GERRIT_HOST = registry.get_defaults(
+        'gitreview-gerrit-host', GERRIT_HOST)
     GERRIT_PORT = int(registry.get_defaults('gerrit-port', '29418'))
+    GITREVIEW_GERRIT_PORT = int(registry.get_defaults(
+        'gitreview-gerrit-port', GERRIT_PORT))
     GERRIT_USER = registry.get_defaults('gerrit-user')
     GERRIT_KEY = registry.get_defaults('gerrit-key')
     GERRIT_GITID = registry.get_defaults('gerrit-committer')
@@ -556,8 +560,8 @@ def main():
                     # Make Local repo
                     push_string = u.make_local_copy(
                         repo_path, project, project_list,
-                        git_opts, ssh_env, upstream, GERRIT_HOST,
-                        GERRIT_PORT, project_git, GERRIT_GITID)
+                        git_opts, ssh_env, upstream, GITREVIEW_GERRIT_HOST,
+                        GITREVIEW_GERRIT_PORT, project_git, GERRIT_GITID)
 
                     description = (
                         find_description_override(repo_path)
