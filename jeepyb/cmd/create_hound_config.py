@@ -33,6 +33,10 @@ def main():
     projects = [entry['project'] for entry in registry.configs_list]
     repos = {}
     for project in projects:
+        # Ignore attic and stackforge, those are repos that are not
+        # active anymore.
+        if project.startswith(['openstack-attic', 'stackforge']):
+            continue
         basename = os.path.basename(project)
         # ignore deb- projects that are forks of other projects intended for
         # internal debian packaging needs only and are generally not of
