@@ -528,6 +528,12 @@ def main():
                 if acl_config:
                     acl_sha = acl_cache.get(acl_config)
                     if project_cache[project].get('acl-sha') != acl_sha:
+
+                        if not os.path.exists(repo_path):
+                            u.make_local_copy(
+                                repo_path, project, project_list,
+                                git_opts, ssh_env, upstream, GERRIT_HOST,
+                                GERRIT_PORT, project_git, GERRIT_GITID)
                         process_acls(
                             acl_config, project, ACL_DIR, section,
                             remote_url, repo_path, ssh_env, gerrit,
