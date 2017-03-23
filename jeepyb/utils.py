@@ -154,6 +154,16 @@ project=%s
         return "push %s HEAD:refs/heads/master"
 
 
+def fsck_repo(repo_path):
+    rc, out = git_command_output(repo_path, 'fsck --full')
+    # Check for non zero return code or warnings which should
+    # be treated as errors. In this case zeroPaddedFilemodes
+    # will not be accepted by Gerrit/jgit but are accepted by C git.
+    if rc != 0 or 'zeroPaddedFilemode' in out:
+        log.error('git fsck of %s failed:\n%s' % (repo_path, out))
+        raise Exception('git fsck failed not importing')
+
+
 class ProjectsRegistry(object):
     """read config from ini or yaml file.
 

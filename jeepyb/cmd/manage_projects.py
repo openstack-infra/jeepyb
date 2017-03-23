@@ -347,56 +347,10 @@ def find_description_override(repo_path):
     return None
 
 
-def fsck_repo(repo_path):
-    rc, out = u.git_command_output(repo_path, 'fsck --full')
-    # Check for non zero return code or warnings which should
-    # be treated as errors. In this case zeroPaddedFilemodes
-    # will not be accepted by Gerrit/jgit but are accepted by C git.
-    if rc != 0 or 'zeroPaddedFilemode' in out:
-        log.error('git fsck of %s failed:\n%s' % (repo_path, out))
-        raise Exception('git fsck failed not importing')
-
-
 def push_to_gerrit(repo_path, project, push_string, remote_url, ssh_env):
     try:
         u.git_command(repo_path, push_string % remote_url, env=ssh_env)
         u.git_command(repo_path, "push --tags %s" % remote_url, env=ssh_env)
-    except Exception:
-        log.exception(
-            "Error pushing %s to Gerrit." % project)
-
-
-def sync_upstream(repo_path, project, ssh_env, upstream_prefix):
-    u.git_command(
-        repo_path,
-        "remote update upstream --prune", env=ssh_env)
-    # Any branch that exists in the upstream remote, we want
-    # a local branch of, optionally prefixed with the
-    # upstream prefix value
-    for branch in u.git_command_output(
-            repo_path, "branch -a")[1].split('\n'):
-        if not branch.strip().startswith("remotes/upstream"):
-            continue
-        if "->" in branch:
-            continue
-        local_branch = branch.split()[0][len('remotes/upstream/'):]
-        if upstream_prefix:
-            local_branch = "%s/%s" % (
-                upstream_prefix, local_branch)
-
-        # Check out an up to date copy of the branch, so that
-        # we can push it and it will get picked up below
-        u.git_command(repo_path, "checkout -B %s %s" % (
-            local_branch, branch))
-
-    try:
-        # Push all of the local branches to similarly named
-        # Branches on gerrit. Also, push all of the tags
-        u.git_command(
-            repo_path,
-            "push origin refs/heads/*:refs/heads/*",
-            env=ssh_env)
-        u.git_command(repo_path, 'push origin --tags', env=ssh_env)
     except Exception:
         log.exception(
             "Error pushing %s to Gerrit." % project)
@@ -567,7 +521,7 @@ def main():
                         find_description_override(repo_path)
                         or description)
 
-                    fsck_repo(repo_path)
+                    u.fsck_repo(repo_path)
 
                     if push_string:
                         push_to_gerrit(
