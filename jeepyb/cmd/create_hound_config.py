@@ -33,7 +33,13 @@ def main():
     projects = [entry['project'] for entry in registry.configs_list]
     repos = {}
     for project in projects:
-        repos[os.path.basename(project)] = {
+        basename = os.path.basename(project)
+        # ignore deb- projects that are forks of other projects intended for
+        # internal debian packaging needs only and are generally not of
+        # interest to upstream developers
+        if basename.startswith('deb-'):
+            continue
+        repos[basename] = {
             'url': "%(proto)s%(gitbase)s/%(project)s" % dict(
                 proto=GIT_PROTOCOL, gitbase=GIT_SERVER, project=project),
             'url-pattern': {
