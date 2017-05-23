@@ -306,7 +306,6 @@ def create_update_github_project(
                                has_wiki=has_wiki)
         created = True
 
-    cache['created-in-github'] = True
     cache['has_wiki'] = has_wiki
     cache['has_downloads'] = has_downloads
     cache['has_issues'] = has_issues
@@ -562,6 +561,7 @@ def main():
                         project_cache[project])
                     if created and GERRIT_REPLICATE:
                         gerrit.replicate(project)
+                    project_cache[project]['created-in-github'] = created
 
             except Exception:
                 log.exception(
