@@ -37,6 +37,16 @@ CGIT_GROUP = os.environ.get('CGIT_GROUP', 'cgit')
 DEFAULT_ORG = os.environ.get('DEFAULT_ORG', None)
 
 
+def clean_string(string):
+    """Scrub out characters that with break cgit.
+
+    cgit can't handle newlines in many of it's fields, so strip them
+    out.
+
+    """
+    return string.replace('\n', ' ').replace('\r', '')
+
+
 def main():
     registry = u.ProjectsRegistry(PROJECTS_YAML)
     gitorgs = {}
@@ -84,7 +94,7 @@ def main():
                 cgit_file.write('\n')
                 cgit_file.write('repo.url=%s/%s\n' % (org, name))
                 cgit_file.write('repo.path=%s/\n' % (project_repo))
-                cgit_file.write('repo.desc=%s\n' % (description))
+                cgit_file.write('repo.desc=%s\n' % (clean_string(description)))
                 if not os.path.exists(project_repo):
                     subprocess.call(['git', 'init', '--bare', project_repo])
                     subprocess.call(['chown', '-R', '%s:%s'
