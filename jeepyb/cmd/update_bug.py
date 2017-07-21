@@ -107,12 +107,18 @@ def set_in_progress(bugtask, launchpad, uploader, change_url):
     # ...thus we need a join on a secondary query to search against
     # all the user's configured E-mail addresses.
     #
+    # Worse, we also need to filter by active accounts only since
+    # picking an inactive account could result in using the wrong
+    # OpenId entirely.
+    #
     query = """SELECT t.external_id FROM account_external_ids t
             INNER JOIN (
                 SELECT t.account_id FROM account_external_ids t
                 WHERE t.email_address = %s )
             original ON t.account_id = original.account_id
-            AND t.external_id LIKE 'https://login.ubuntu.com%%'"""
+            AND t.external_id LIKE 'https://login.ubuntu.com%%'
+            JOIN accounts a ON a.account_id = t.account_id
+            WHERE a.inactive = 'N'"""
 
     cursor = jeepyb.gerritdb.connect().cursor()
     cursor.execute(query, searchkey)
