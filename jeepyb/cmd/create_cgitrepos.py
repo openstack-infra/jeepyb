@@ -61,7 +61,7 @@ def main():
                                    'DEFAULT_ORG is set.' % project)
             (org, name) = (DEFAULT_ORG, project)
         description = entry.get('description', name)
-        retired = entry.get('acl-config', '').endswith('retired.config')
+        retired = entry.get('acl-config', '').endswith('/retired.config')
         assert project not in names
         names.add(project)
         gitorgs.setdefault(org, []).append((name, description, retired))
