@@ -261,6 +261,8 @@ def create_update_github_project(
         needs_update = True
     if cache.get('has_wiki', default_has_wiki) != has_wiki:
         needs_update = True
+    if cache.get('description') != description:
+        needs_update = True
     if not needs_update:
         return False
 
