@@ -30,8 +30,7 @@ GIT_PROTOCOL = os.environ.get('GIT_PROTOCOL', 'git://')
 
 def main():
     registry = u.ProjectsRegistry(PROJECTS_YAML)
-    projects = [entry['project'] for entry in registry.configs_list
-                if not entry.get('acl-config', '').endswith('/retired.config')]
+    projects = [entry['project'] for entry in registry.configs_list]
     repos = {}
     for project in projects:
         # Ignore attic and stackforge, those are repos that are not

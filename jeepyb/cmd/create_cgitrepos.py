@@ -61,10 +61,9 @@ def main():
                                    'DEFAULT_ORG is set.' % project)
             (org, name) = (DEFAULT_ORG, project)
         description = entry.get('description', name)
-        retired = entry.get('acl-config', '').endswith('/retired.config')
         assert project not in names
         names.add(project)
-        gitorgs.setdefault(org, []).append((name, description, retired))
+        gitorgs.setdefault(org, []).append((name, description))
     if SCRATCH_SUBPATH:
         assert SCRATCH_SUBPATH not in gitorgs
         scratch_path = os.path.join(REPO_PATH, SCRATCH_SUBPATH)
@@ -90,15 +89,14 @@ def main():
             org_dir = os.path.join(REPO_PATH, org)
             projects = gitorgs[org]
             projects.sort()
-            for (name, description, retired) in projects:
-                if not retired:
-                    project_repo = "%s.git" % os.path.join(org_dir, name)
-                    cgit_file.write('\n')
-                    cgit_file.write('repo.url=%s/%s\n' % (org, name))
-                    cgit_file.write('repo.path=%s/\n' % (project_repo))
-                    cgit_file.write('repo.desc=%s\n' % (description))
-                    cgit_file.write(
-                        'repo.desc=%s\n' % (clean_string(description)))
+            for (name, description) in projects:
+                project_repo = "%s.git" % os.path.join(org_dir, name)
+                cgit_file.write('\n')
+                cgit_file.write('repo.url=%s/%s\n' % (org, name))
+                cgit_file.write('repo.path=%s/\n' % (project_repo))
+                cgit_file.write('repo.desc=%s\n' % (description))
+                cgit_file.write(
+                    'repo.desc=%s\n' % (clean_string(description)))
                 if not os.path.exists(project_repo):
                     subprocess.call(['git', 'init', '--bare', project_repo])
                     subprocess.call(['chown', '-R', '%s:%s'

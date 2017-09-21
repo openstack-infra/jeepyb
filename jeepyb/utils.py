@@ -26,6 +26,18 @@ PROJECTS_YAML = os.environ.get('PROJECTS_YAML', '/home/gerrit2/projects.yaml')
 log = logging.getLogger("jeepyb.utils")
 
 
+def is_retired(entry):
+    """Is a project retired"""
+    if entry.get('acl-config', '').endswith('/retired.config'):
+        return True
+    project = entry['project']
+    if '/' in project:
+        (org, name) = project.split('/')
+        if org.endswith('-attic'):
+            return True
+    return False
+
+
 def short_project_name(full_project_name):
     """Return the project part of the git repository name."""
     return full_project_name.split('/')[-1]
@@ -173,15 +185,15 @@ class ProjectsRegistry(object):
         self.yaml_doc = [c for c in yaml.safe_load_all(open(yaml_file))]
         self.single_doc = single_doc
 
-        self.configs_list = []
+        self._configs_list = []
         self.defaults = {}
         self._parse_file()
 
     def _parse_file(self):
         if self.single_doc:
-            self.configs_list = self.yaml_doc[0]
+            self._configs_list = self.yaml_doc[0]
         else:
-            self.configs_list = self.yaml_doc[1]
+            self._configs_list = self.yaml_doc[1]
 
         if os.path.exists(PROJECTS_INI):
             self.defaults = ConfigParser.ConfigParser()
@@ -193,7 +205,7 @@ class ProjectsRegistry(object):
                 pass
 
         configs = {}
-        for section in self.configs_list:
+        for section in self._configs_list:
             configs[section['project']] = section
 
         self.configs = configs
@@ -221,3 +233,7 @@ class ProjectsRegistry(object):
             return default
         else:
             return self.defaults.get(item, default)
+
+    @property
+    def configs_list(self):
+        return [entry for entry in self._configs_list if not is_retired(entry)]
