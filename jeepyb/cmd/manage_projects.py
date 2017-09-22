@@ -209,6 +209,11 @@ def get_group_uuid(gerrit, group):
     if group in GERRIT_SYSTEM_GROUPS:
         return GERRIT_SYSTEM_GROUPS[group]
     gerrit.createGroup(group)
+    for user in gerrit.listMembers(group):
+        if gerrit.username == user['username']:
+            # Gerrit now adds creating user to groups. We don't want that.
+            gerrit.removeMember(group, gerrit.username)
+            break
     uuid = _get_group_uuid(group)
     if uuid:
         return uuid
