@@ -94,7 +94,6 @@ def main():
                 cgit_file.write('\n')
                 cgit_file.write('repo.url=%s/%s\n' % (org, name))
                 cgit_file.write('repo.path=%s/\n' % (project_repo))
-                cgit_file.write('repo.desc=%s\n' % (description))
                 cgit_file.write(
                     'repo.desc=%s\n' % (clean_string(description)))
                 if not os.path.exists(project_repo):
