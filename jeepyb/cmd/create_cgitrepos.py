@@ -72,7 +72,7 @@ def main():
             if not os.path.isdir(scratch_dir):
                 os.makedirs(scratch_dir)
             projects = gitorgs[org]
-            for (name, description, retired) in projects:
+            for (name, description) in projects:
                 scratch_repo = "%s.git" % os.path.join(scratch_dir, name)
                 subprocess.call(['git', 'init', '--bare', scratch_repo])
                 subprocess.call(['chown', '-R', '%s:%s'
