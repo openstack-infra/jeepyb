@@ -114,9 +114,15 @@ def find_specs(launchpad, dbconn, args):
                                 args.commit + '^1..' + args.commit],
                                stdout=subprocess.PIPE).communicate()[0]
 
+    change = args.change
+    if '~' in change:
+        # Newer gerrit provides the change argument in this format:
+        # gtest-org%2Fgtest~master~I117f34aaa4253e0b82b98de9077f7188d55c3f33
+        # So we need to split off the changeid if there is other data in there.
+        change = change.rsplit('~', 1)[1]
     cur = dbconn.cursor()
     cur.execute("select subject, topic from changes where change_key=%s",
-                args.change)
+                change)
     subject, topic = cur.fetchone()
     specs = set([m.group(2) for m in SPEC_RE.finditer(git_log)])
 
