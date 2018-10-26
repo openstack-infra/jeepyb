@@ -54,10 +54,10 @@ MESSAGE = """Thank you for contributing to %(project)s!
 
 If you have never contributed to OpenStack before make sure you have read the
 getting started documentation:
-http://docs.openstack.org/infra/manual/developers.html#getting-started
+https://docs.openstack.org/infra/manual/developers.html#getting-started
 
 Otherwise please visit
-http://docs.openstack.org/infra/manual/developers.html#development-workflow
+https://docs.openstack.org/infra/manual/developers.html#development-workflow
 and follow the instructions there to upload your change to Gerrit.
 """
 

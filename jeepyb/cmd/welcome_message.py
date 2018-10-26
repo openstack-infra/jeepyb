@@ -91,7 +91,7 @@ reviews: anybody can do it, and it's a great way to learn the code base.
 Thanks again for supporting OpenStack, we look forward to working with you.
 
 IRC: https://wiki.openstack.org/wiki/IRC
-Workflow: http://docs.openstack.org/infra/manual/developers.html
+Workflow: https://docs.openstack.org/infra/manual/developers.html
 Commit Messages: https://wiki.openstack.org/wiki/GitCommitMessages
 """
 
