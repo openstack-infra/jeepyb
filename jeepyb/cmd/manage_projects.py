@@ -59,6 +59,7 @@ import logging
 import os
 import re
 import shutil
+import sys
 import time
 
 import gerritlib.gerrit
@@ -89,6 +90,14 @@ class FetchConfigException(Exception):
 
 
 class CopyACLException(Exception):
+    pass
+
+
+class ProcessACLException(Exception):
+    pass
+
+
+class PushToGerritException(Exception):
     pass
 
 
@@ -127,7 +136,7 @@ def fetch_config(project, remote_url, repo_path, env=None):
         else:
             status, output = u.git_command_output(
                 repo_path, "ls-files --with-tree=remotes/gerrit-meta/config "
-                "project.config", env)
+                           "project.config", env)
         if output.strip() != "project.config" or status != 0:
             log.debug("Failed to find project.config for project: %s" %
                       project)
@@ -358,6 +367,7 @@ def push_to_gerrit(repo_path, project, push_string, remote_url, ssh_env):
     except Exception:
         log.exception(
             "Error pushing %s to Gerrit." % project)
+        raise PushToGerritException()
 
 
 def process_acls(acl_config, project, ACL_DIR, section,
@@ -375,6 +385,7 @@ def process_acls(acl_config, project, ACL_DIR, section,
     except Exception:
         log.exception(
             "Exception processing ACLS for %s." % project)
+        raise ProcessACLException()
     finally:
         u.git_command(repo_path, 'reset --hard')
         u.git_command(repo_path, 'checkout master')
@@ -395,7 +406,6 @@ def create_gerrit_project(project, project_list, gerrit):
 
 def create_local_mirror(local_git_dir, project_git,
                         gerrit_system_user, gerrit_system_group):
-
     git_mirror_path = os.path.join(local_git_dir, project_git)
     if not os.path.exists(git_mirror_path):
         (ret, output) = u.run_command_status(
@@ -462,6 +472,8 @@ def main():
     project_list = gerrit.listProjects()
     ssh_env = u.make_ssh_wrapper(GERRIT_USER, GERRIT_KEY)
     try:
+        # Collect processed errors,if any
+        process_errors = []
         for section in registry.configs_list:
             project = section['project']
             if args.projects and project not in args.projects:
@@ -569,8 +581,9 @@ def main():
                     project_cache[project]['created-in-github'] = created
 
             except Exception:
-                log.exception(
-                    "Problems creating %s, moving on." % project)
+                msg = "Problems creating %s, moving on." % project
+                log.exception(msg)
+                process_errors.append(msg)
                 continue
             finally:
                 # Clean up after ourselves - this repo has no use
@@ -582,6 +595,11 @@ def main():
             cache_out.write(json.dumps(
                 project_cache, sort_keys=True, indent=2))
         os.unlink(ssh_env['GIT_SSH'])
+        if len(process_errors) > 0:
+            log.error("%d problems has been caught during run:\n %s" % (
+                len(process_errors), process_errors))
+            sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
