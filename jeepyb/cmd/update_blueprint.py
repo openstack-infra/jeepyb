@@ -89,8 +89,8 @@ def update_spec(launchpad, project, name, subject, link, topic=None):
         wb = ''
     changed = False
     if topic:
-        topiclink = '%s/#q,topic:%s,n,z' % (link[:link.find('/', 8)],
-                                            topic)
+        topiclink = '%s/#/q/topic:%s' % (link[:link.find('/', 8)],
+                                         topic)
         if topiclink not in wb:
             wb += "\n\n\nGerrit topic: %(link)s" % dict(link=topiclink)
             changed = True
